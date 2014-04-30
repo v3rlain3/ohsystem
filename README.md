@@ -95,4 +95,4 @@ We do not support OS X
 ----
 
 ##### The OHSystem was founded by Neubivljiv & Grief-Code.
-We are working on the development process since over a year now and started the last months to include a full hosting platform which is constantly growing each day.
+We have been working on the development process since over a year now and started the last months to include a full hosting platform which is constantly growing each day.

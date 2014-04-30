@@ -3231,3 +3231,61 @@ string CLanguage :: UserUsed6( string user, string thing)
     UTIL_Replace( Out, "$THING$", thing);
     return Out;
 }
+
+string CLanguage :: UserWasKickedForSlowDownloadRate( string user )
+{
+    string Out = m_CFG->GetString( "oh_235", "oh_235" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+
+string CLanguage :: UserWasAutomaticallyUnmuted( )
+{
+    string Out = m_CFG->GetString( "oh_236", "oh_236" );
+    return Out;
+}
+
+string CLanguage :: SpamWarning( )
+{
+    string Out = m_CFG->GetString( "oh_237", "oh_237" );
+    return Out;
+}
+
+string CLanguage :: UserWasMutedForReason( string user, string reason)
+{
+    string Out = m_CFG->GetString( "oh_238", "oh_238" );
+    UTIL_Replace( Out, "$USER$", user );
+    UTIL_Replace( Out, "$REASON$", reason);
+    return Out;
+}
+
+string CLanguage :: SpamWarning2( )
+{
+    string Out = m_CFG->GetString( "oh_239", "oh_239" );
+    return Out;
+}
+
+string CLanguage :: UserIgnoerNotify( string user )
+{
+    string Out = m_CFG->GetString( "oh_240", "oh_240" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+
+string CLanguage :: FlameWarn( )
+{
+    string Out = m_CFG->GetString( "oh_241", "oh_241" );
+    return Out;
+}
+
+string CLanguage :: FlameWarn2( )
+{
+    string Out = m_CFG->GetString( "oh_242", "oh_242" );
+    return Out;
+}
+
+string CLanguage :: FlameWarn3( )
+{
+    string Out = m_CFG->GetString( "oh_243", "oh_243" );
+    return Out;
+}

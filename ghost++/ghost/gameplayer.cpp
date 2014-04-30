@@ -390,20 +390,18 @@ bool CGamePlayer :: Update( void *fd )
         {
             if( GetLastMapPartAcked( ) / downloadingTime < 500 && m_Game->GetSlotsOccupied( ) <= 1 )
             {
-                CONSOLE_Print( "[DENY] Kicking player: download speed too low" );
                 m_DeleteMe = true;
                 SetLeftReason( "download speed too low" );
                 SetLeftCode( PLAYERLEAVE_LOBBY );
-                m_Game->SendAllChat( "Kicking Player["+m_Name+"] for having a too slow download rate." );
+                m_Game->SendAllChat( m_Game->m_GHost->m_Language->UserWasKickedForSlowDownloadRate( m_Name ) );
                 m_Game->OpenSlot( m_Game->GetSIDFromPID( GetPID( ) ), false );
             }
             else if( GetLastMapPartAcked( ) / downloadingTime < 100 )
             {
-                CONSOLE_Print( "[DENY] Kicking player: download speed too low" );
                 m_DeleteMe = true;
                 SetLeftReason( "download speed too low" );
                 SetLeftCode( PLAYERLEAVE_LOBBY );
-                m_Game->SendAllChat( "Kicking Player["+m_Name+"] for having a too slow download rate." );
+                m_Game->SendAllChat( m_Game->m_GHost->m_Language->UserWasKickedForSlowDownloadRate( m_Name ) );
                 m_Game->OpenSlot( m_Game->GetSIDFromPID( GetPID( ) ), false );
             }
         }
@@ -413,7 +411,7 @@ bool CGamePlayer :: Update( void *fd )
     if( GetMuted( ) && m_MutedAuto && GetTicks( ) - m_MutedTicks > 30000  )
     {
         SetMuted( false );
-        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically unmuted." );
+        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] "+m_Game->m_GHost->m_Language->UserWasAutomaticallyUnmuted( ) );
         m_MuteMessages.clear( );
     }
 
@@ -608,24 +606,24 @@ void CGamePlayer :: ProcessPackets( )
                                 {
                                     SetMuted( true );
                                     m_MutedAuto = true;
-                                    m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] Please do not spam, next time you will get a penality point!" );
+                                    m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] "+m_Game->m_GHost->m_Language->SpamWarning( ) );
                                     m_MuteMessages.clear( );
-                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically muted for spamming." );
+                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "spamming" ) );
                                 }
                                 if( m_Count == 2 )
                                 {
-                                    m_Game->SendAllChat( "Use '!ignore "+m_Name+"' to ignore "+m_Name+", he seems to be a spammer." );
-                                    m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] Please do not spam, on the next mute you will be banned!" );
+                                    m_Game->SendAllChat( m_Game->m_GHost->m_Language->UserIgnoerNotify( m_Name ) );
+                                    m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] "+m_Game->m_GHost->m_Language->SpamWarning2( ) );
                                     SetMuted( true );
                                     m_Game->m_Pairedpenps.push_back( Pairedpenp( string(), m_Game->m_GHost->m_DB->Threadedpenp( m_Name, "Spam" , m_Game->m_GHost->m_BotManagerName, 1, "add" ) ) );
                                     m_MutedAuto = true;
-                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically muted for flaming." );
+                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "spamming" ) );
                                 }
                                 if( m_Count == 3 )
                                 {
                                     m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Spam", m_Game->m_GHost->m_SpamBanTime, "" ) ) );
                                     SetMuted( true );
-                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically permanently muted for spamming." );
+                                    m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "spamming" ) );
 
                                 }
                             }
@@ -651,31 +649,31 @@ void CGamePlayer :: ProcessPackets( )
 
                                     if( RecentCount == 1 )
                                     {
-                                        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] Please do not insult or flame, on the next bad word you will be muted!" );
+                                        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] "+m_Game->m_GHost->m_Language->FlameWarn ());
                                     }
 
                                     if( RecentCount == 2 )
                                     {
-                                        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] Please do not insult or flame, on the next bad word you will get a penality point!" );
+                                        m_Game->SendChat( m_PID, "["+m_Game->m_GHost->m_BotManagerName+"] "+m_Game->m_GHost->m_Language->FlameWarn2 () );
                                         SetMuted( true );
                                         m_MutedAuto = true;
-                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically muted for flaming." );
+                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
                                     }
 
                                     if( RecentCount == 3 )
                                     {
-                                        m_Game->SendChat( m_PID, "Please do not insult or flame, on the next bad word you will get banned!" );
+                                        m_Game->SendChat( m_PID, m_Game->m_GHost->m_Language->FlameWarn3 () );
                                         SetMuted( true );
                                         m_Game->m_Pairedpenps.push_back( Pairedpenp( string(), m_Game->m_GHost->m_DB->Threadedpenp( m_Name, "Flame/Insult" , m_Game->m_GHost->m_BotManagerName, 1, "add" ) ) );
                                         m_MutedAuto = true;
-                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically muted for flaming." );
+                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
                                     }
 
                                     if( RecentCount == 4 )
                                     {
                                         m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Flame/Insult", m_Game->m_GHost->m_FirstFlameBanTime, "" ) ) );
                                         SetMuted( true );
-                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically permanently muted for flaming." );
+                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
 
                                     }
                                     if( RecentCount == 5 )
@@ -683,7 +681,7 @@ void CGamePlayer :: ProcessPackets( )
                                         //some people simple dont understand the ban policy.
                                         m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Flame/Insult", m_Game->m_GHost->m_SecondFlameBanTime, "" ) ) );
                                         SetMuted( true );
-                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Name + " has been automatically permanently muted for flaming." );
+                                        m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
 
                                     }
                                 }

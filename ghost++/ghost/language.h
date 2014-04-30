@@ -498,6 +498,15 @@ public:
     string UserUsed4( string user, string thing);
     string UserUsed5( string user, string thing);
     string UserUsed6( string user, string thing);
+    string UserWasKickedForSlowDownloadRate( string user );
+    string UserWasAutomaticallyUnmuted( );
+    string SpamWarning( );
+    string UserWasMutedForReason( string user, string reason);
+    string SpamWarning2( );
+    string UserIgnoerNotify( string user );
+    string FlameWarn( );
+    string FlameWarn2( );
+    string FlameWarn3( );
 };
 
 #endif

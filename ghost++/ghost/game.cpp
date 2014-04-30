@@ -1014,7 +1014,7 @@ void CGame :: EventPlayerDeleted( CGamePlayer *player )
                         char team = m_Slots[sid].GetTeam( );
                         if( team == Team )
                             CountAlly++;
-                        else
+                        else if(team!=12)
                             CountEnemy++;
                     }
                 }
@@ -1601,8 +1601,6 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
                             CONSOLE_Print( "Bad input for give command." );
                         else
                         {
-                            SS >> TheThing;
-
                             if( !SS.eof( ) )
                             {
                                 getline( SS, TheThing );
@@ -3529,7 +3527,7 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
                         return HideCommand;
                     }
 
-                    if( VLevel > 2 && Level < VLevel )
+                    if( VLevel > 2 || Level < VLevel )
                         SendChat( player, m_GHost->m_Language->NoPermissionToExecCommand() );
                     else if( OnlyPlayer )
                         SendChat( player, m_GHost->m_Language->VoteKickNotPossiblePlayerIsInAnotherTeam( LastMatch->GetName( ) ) );
@@ -4098,26 +4096,16 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
             if (sid <= 4 && sid >= 0)
             {
                 int Win = 0;
-                if( (*i)->GetGames( ) >= 10 )
-                    Win = ((*i)->GetWinPerc( ) * (*i)->GetGames( ));
-                else if( Win == 0 )
-                    Win = (33 * (*i)->GetGames( ));
-                else if( (*i)->GetGames( ) == 0 )
-                    Win = 33;
-
+                if((*i)->GetGames( ) > 0 )
+                    Win = ((*i)->GetScore( ) / (*i)->GetGames( ));
                 m_SentinelWinPoints += Win;
                 m_TotalWinPoints += Win;
             }
             else if(sid >= 5 && sid <= 9)
             {
                 int Win = 0;
-                if( (*i)->GetGames( ) >= 10 )
-                    Win = ((*i)->GetWinPerc( ) * (*i)->GetGames( ));
-                else if( Win == 0 )
-                    Win = (33 * (*i)->GetGames( ));
-                else if( (*i)->GetGames( ) == 0 )
-                    Win = 33;
-
+                if((*i)->GetGames( ) > 0 )
+                    Win = ((*i)->GetScore( ) / (*i)->GetGames( ));
                 m_ScourgeWinPoints += Win;
                 m_TotalWinPoints += Win;
             }
@@ -4184,23 +4172,10 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
             else if ( RandomNumber == 3 )
                 SendAllChat( User + " drives a car over " + LastMatch->GetName( ) + "." );
             else if ( RandomNumber == 4 )
-            {
-                SendAllChat( User + " tries to steals " + LastMatch->GetName( ) + "'s cookies." );
-                if( LastMatch->GetCookies() != 0 )
-                {
-                    player->SetCookie( LastMatch->GetCookies( ) );
-                    LastMatch->SetCookie( 0 );
-                    SendChat( player, "You can now eat cookies by using '!eat'" );
-                    SendAllChat( LastMatch->GetName( ) + " had ["+ UTIL_ToString( LastMatch->GetCookies( ) ) + "] cookie(s)." );
-                }
-                else
-                    SendAllChat( "But " + LastMatch->GetName( ) + " hadn't any cookies :( " );
-            }
-            else if ( RandomNumber == 5 )
                 SendAllChat( User + " washes " + LastMatch->GetName( ) + "'s car.  Oh, the irony!" );
-            else if ( RandomNumber == 6 )
+            else if ( RandomNumber == 5 )
                 SendAllChat( User + " burns " + LastMatch->GetName( ) + "'s house." );
-            else if ( RandomNumber == 7 )
+            else if ( RandomNumber >= 6 )
                 SendAllChat( User + " finds " + LastMatch->GetName( ) + "'s picture on uglypeople.com." );
         }
         else
@@ -4222,21 +4197,6 @@ bool CGame :: EventPlayerBotCommand( CGamePlayer *player, string command, string
             else if ( RandomNumber == 7 )
                 SendAllChat( User + " finds his picture on uglypeople.com." );
         }
-    }
-
-    //
-    // !EAT
-    //
-    else if( Command == "eat" && Payload.empty( ) && m_GHost->m_FunCommands )
-    {
-        if( player->GetCookies( ) != 0 )
-        {
-            player->SetCookie( player->GetCookies( )-1 );
-            SendAllChat( m_GHost->m_Language->UserAteACookie( player->GetName( ) ) );
-            SendChat( player, m_GHost->m_Language->UserRemovedCookieNotify( UTIL_ToString( player->GetCookies( ) ) ) );
-        }
-        else
-            SendChat( player, m_GHost->m_Language->ErrorEatACookieNoCookieAvaible( ) );
     }
 
     //

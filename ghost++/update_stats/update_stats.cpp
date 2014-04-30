@@ -359,6 +359,29 @@ int main( int argc, char **argv )
             bool b_w3mmdfixedwinner = false;
             string s_gamename = "";
 
+            // player rate values
+            double sentinelTeamRate = 0.00;
+            double scourgeTeamRate = 0.00;
+            uint32_t iSentTeamKills = 0;
+            uint32_t iSentTeamDeaths = 0;
+            uint32_t iSentAssists = 0;
+            uint32_t iSentCreeps = 0;
+            uint32_t iSentDenies = 0;
+            uint32_t iSentNeutrals = 0;
+            uint32_t iSentTowers = 0;
+            uint32_t iSentRaxes = 0;
+            uint32_t iSentLevel = 0;
+            uint32_t iScouTeamKills = 0;
+            uint32_t iScouTeamDeaths = 0;
+            uint32_t iScouAssists = 0;
+            uint32_t iScouCreeps = 0;
+            uint32_t iScouDenies = 0;
+            uint32_t iScouNeutrals = 0;
+            uint32_t iScouTowers = 0;
+            uint32_t iScouRaxes = 0;
+            uint32_t iScouLevel = 0;
+            double dPlayerRate[12];
+
             int i_playerCounter = 0;
             while( Row.size( ) == 10 ) {
 
@@ -372,6 +395,7 @@ int main( int argc, char **argv )
                 i_ingameTower[i_playerCounter]=0;
                 i_ingameRaxes[i_playerCounter]=0;
                 i_zerodeaths[i_playerCounter]=0;
+                dPlayerRate[i_playerCounter]=0.00;
 
                 //init legiontd relating values
                 legionTdValue[i_playerCounter]=0;
@@ -503,15 +527,16 @@ int main( int argc, char **argv )
                 uint32_t i_maxLoosingStreak=0;
                 int32_t i_score = 0;
                 if(! b_newPlayer[i_playerCounter] ) {
-                    MYSQL_RES *DetailedStatsQuery = QueryBuilder(Connection, "SELECT streak, maxstreak, losingstreak, maxlosingstreak, score FROM oh_stats WHERE pid='"+UTIL_ToString(i_playerId[i_playerCounter])+"' AND month=MONTH(NOW()) AND year=YEAR(NOW());" );
+                    MYSQL_RES *DetailedStatsQuery = QueryBuilder(Connection, "SELECT games, streak, maxstreak, losingstreak, maxlosingstreak, score FROM oh_stats WHERE pid='"+UTIL_ToString(i_playerId[i_playerCounter])+"' AND month=MONTH(NOW()) AND year=YEAR(NOW());" );
                     if( DetailedStatsQuery ) {
                         vector<string> Row = MySQLFetchRow( DetailedStatsQuery );
-                        if( Row.size( ) == 5 ) {
-                            i_currStreak=UTIL_ToUInt32(Row[0]);
-                            i_maxStreak=UTIL_ToUInt32(Row[1]);
-                            i_currLoosStreak=UTIL_ToUInt32(Row[2]);
-                            i_maxLoosingStreak=UTIL_ToUInt32(Row[3]);
-                            i_score=UTIL_ToInt32(Row[4]);
+                        if( Row.size( ) == 6 ) {
+                            dPlayerRate[i_playerCounter] = UTIL_ToUInt32(Row[5])/UTIL_ToUInt32(Row[0]);
+                            i_currStreak=UTIL_ToUInt32(Row[1]);
+                            i_maxStreak=UTIL_ToUInt32(Row[2]);
+                            i_currLoosStreak=UTIL_ToUInt32(Row[3]);
+                            i_maxLoosingStreak=UTIL_ToUInt32(Row[4]);
+                            i_score=UTIL_ToInt32(Row[5]);
                         }
                     }
                 }
@@ -551,10 +576,11 @@ int main( int argc, char **argv )
                     }
 
                     // more information about the player
-                    MYSQL_RES *DotAPlayerResult = QueryBuilder(Connection, "SELECT kills, deaths, assists, creepkills, creepdenies, neutralkills, towerkills, raxkills FROM oh_dotaplayers WHERE gameid='"+GameID+"' AND newcolour='"+UTIL_ToString(i_playerColour[i_playerCounter])+"';" );
+                    uint32_t level = 0;
+                    MYSQL_RES *DotAPlayerResult = QueryBuilder(Connection, "SELECT kills, deaths, assists, creepkills, creepdenies, neutralkills, towerkills, raxkills, level FROM oh_dotaplayers WHERE gameid='"+GameID+"' AND newcolour='"+UTIL_ToString(i_playerColour[i_playerCounter])+"';" );
                     if(DotAPlayerResult) {
                         vector<string> Row = MySQLFetchRow( DotAPlayerResult );
-                        if( Row.size( ) == 8 ) {
+                        if( Row.size( ) == 9 ) {
                             i_ingameKills[i_playerCounter]=UTIL_ToUInt32(Row[0]);
                             i_ingameDeaths[i_playerCounter]=UTIL_ToUInt32(Row[1]);
                             i_ingameAssists[i_playerCounter]=UTIL_ToUInt32(Row[2]);
@@ -563,6 +589,7 @@ int main( int argc, char **argv )
                             i_ingameNeutrals[i_playerCounter]=UTIL_ToUInt32(Row[5]);
                             i_ingameTower[i_playerCounter]=UTIL_ToUInt32(Row[6]);
                             i_ingameRaxes[i_playerCounter]=UTIL_ToUInt32(Row[7]);
+                            level = UTIL_ToUInt32(Row[8]);
                         }
                     }
                     if(i_ingameDeaths[i_playerCounter]==0) {
@@ -574,12 +601,33 @@ int main( int argc, char **argv )
                             s_playerScore[i_playerCounter]=", score = score+" + Int32_ToString( ScoreWin+(i_currStreak*StreakBonus) );
                             i_newPlayerScore[i_playerCounter]=ScoreStart+ScoreWin;
                             i_wins[i_playerCounter]=1;
+                            iSentTeamKills += i_ingameKills[i_playerCounter];
+                            iSentTeamDeaths += i_ingameDeaths[i_playerCounter];
+                            iSentTeamAssists += i_ingameAssists[i_playerCounter];
+                            iSentTeamCreeps += i_ingameCreeps[i_playerCounter];
+                            iSentTeamDenies += i_ingameDenies[i_playerCounter];
+                            iSentTeamNeutrals += i_ingameNeutrals[i_playerCounter];
+                            iSentTeamTowers += i_ingameTower[i_playerCounter];
+                            iSentTeamRaxes += i_ingameRaxes[i_playerCounter];
+                            iSentTeamLevel += level;
+                            sentinelTeamRate += dPlayerRate[i_playerCounter];
+
                         }
 
                         else if( ( i_Winner == 2 && i_playerColour[i_playerCounter] >= 1 && i_playerColour[i_playerCounter] <= 5 ) || ( i_Winner == 1 && i_playerColour[i_playerCounter] >= 7 && i_playerColour[i_playerCounter] <= 11 ) ) {
                             s_playerScore[i_playerCounter]=", score = score-" + Int32_ToString( ScoreLoose+(i_currLoosStreak*StreakBonus) );
                             i_newPlayerScore[i_playerCounter]=ScoreStart-ScoreLoose;
                             i_losses[i_playerCounter]=1;
+                            iScouTeamKills += i_ingameKills[i_playerCounter];
+                            iScouTeamDeaths += i_ingameDeaths[i_playerCounter];
+                            iScouTeamAssists += i_ingameAssists[i_playerCounter];
+                            iScouTeamCreeps += i_ingameCreeps[i_playerCounter];
+                            iScouTeamDenies += i_ingameDenies[i_playerCounter];
+                            iScouTeamNeutrals += i_ingameNeutrals[i_playerCounter];
+                            iScouTeamTowers += i_ingameTower[i_playerCounter];
+                            iScouTeamRaxes += i_ingameRaxes[i_playerCounter];
+                            iScouTeamLevel += level;
+                            scourgeTeamRate += dPlayerRate[i_playerCounter];
                         }
                         //Draw Game
                         else {

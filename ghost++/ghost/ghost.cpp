@@ -1968,8 +1968,8 @@ uint32_t CGHost :: GetStatsAliasNumber( string alias ) {
         if( m_StatsAlias == 0 ) {
             CONSOLE_Print( "Did not found any alias for ["+alias+"]" );
         }
-    } else {
-        m_StatsAlias = m_CurrentGame->m_GameAlias;
+    } else if( m_CurrentGame ) {
+            m_StatsAlias = m_CurrentGame->m_GameAlias;
     }
     return m_StatsAlias;
 }
