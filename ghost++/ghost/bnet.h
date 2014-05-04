@@ -55,6 +55,8 @@ class CCallableInboxSummaryCheck;
 class CCallableDotAPlayerSummaryCheck;
 class CDBBan;
 class CCallableGameUpdate;
+class CCallableBotStatusUpdate;
+class CCallableBotStatusCreate;
 
 typedef pair<string,CCallablePassCheck *> PairedPassCheck;
 typedef pair<string,CCallableRegAdd *> PairedRegAdd;
@@ -72,6 +74,8 @@ typedef pair<string,CCallableInboxSummaryCheck *> PairedINCheck;
 typedef pair<string,CCallableStatsPlayerSummaryCheck *> PairedSCheck;
 typedef pair<string,CCallableGameUpdate *> PairedGameUpdate;
 typedef pair<string,CCallableStatsPlayerSummaryCheck *> PairedRankCheck;
+typedef pair<string,CCallableBotStatusUpdate *> BotStatusUpdate;
+typedef pair<string,CCallableBotStatusCreate *> BotStatusCreate;
 
 class CBNET
 {
@@ -99,6 +103,8 @@ private:
     vector<PairedGSCheck> m_PairedGSChecks;		// vector of paired threaded database game player summary checks in progress
     vector<PairedRankCheck> m_PairedRankChecks;
     vector<PairedStreakCheck> m_PairedStreakChecks;               // vector of paired threaded database streak in progress
+    vector<BotStatusUpdate> m_BotStatusUpdate;
+    vector<BotStatusCreate> m_BotStatusCreate;
     vector<PairedINCheck> m_PairedINChecks;               // vector of paired threaded database inbox checks in progress
     vector<PairedSCheck> m_PairedSChecks;		// vector of paired threaded database DotA player summary checks in progress
     vector<PairedGameUpdate> m_PairedGameUpdates;	// vector of paired threaded database gamelist queue
@@ -114,12 +120,9 @@ private:
     string m_BNLSServer;							// BNLS server to connect to (for warden handling)
     uint16_t m_BNLSPort;							// BNLS port
     uint32_t m_BNLSWardenCookie;					// BNLS warden cookie
-    string m_CDKeyROC;								// ROC CD key
-    string m_CDKeyTFT;								// TFT CD key
     string m_CountryAbbrev;							// country abbreviation
     string m_Country;								// country
     uint32_t m_LocaleID;							// see: http://msdn.microsoft.com/en-us/library/0h88fahh%28VS.85%29.aspx
-    string m_UserName;								// battle.net username
     string m_UserPassword;							// battle.net password
     string m_FirstChannel;							// the first chat channel to join upon entering chat (note: we hijack this to store the last channel when entering a game)
     string m_CurrentChannel;						// the current chat channel
@@ -156,6 +159,7 @@ private:
     boost::mutex StatsUpdateMutex;
     bool b_StatsUpdate;
     bool m_FakeRealm;
+    uint32_t LastUpdateTime;
 
 public:
     CBNET( CGHost *nGHost, string nServer, string nServerAlias, string nBNLSServer, uint16_t nBNLSPort, uint32_t nBNLSWardenCookie, string nCDKeyROC, string nCDKeyTFT, string nCountryAbbrev, string nCountry, uint32_t nLocaleID, string nUserName, string nUserPassword, string nFirstChannel, char nCommandTrigger, bool nHoldFriends, bool nHoldClan, bool nPublicCommands, unsigned char nWar3Version, BYTEARRAY nEXEVersion, BYTEARRAY nEXEVersionHash, string nPasswordHashType, string nPVPGNRealmName, uint32_t nMaxMessageLength, uint32_t nHostCounterID );
@@ -163,6 +167,10 @@ public:
 
     vector<string> m_Permissions;
     vector<string> m_AdminLog;
+
+    string m_CDKeyROC;								// ROC CD key
+    string m_CDKeyTFT;								// TFT CD key
+    string m_UserName;								// battle.net username
 
     bool GetExiting( )					{
         return m_Exiting;

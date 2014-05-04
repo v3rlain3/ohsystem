@@ -261,6 +261,7 @@ public:
     uint32_t m_BroadCastPort;
     string m_LanCFGPath;
     uint32_t m_FallBackLanguage;
+    bool isCreated;
 
     CGHost( CConfig *CFG );
     ~CGHost( );

@@ -228,6 +228,8 @@ public:
     virtual CCallableW3MMDVarAdd *ThreadedW3MMDVarAdd( uint32_t gameid, map<VarP,int32_t> var_ints );
     virtual CCallableW3MMDVarAdd *ThreadedW3MMDVarAdd( uint32_t gameid, map<VarP,double> var_reals );
     virtual CCallableW3MMDVarAdd *ThreadedW3MMDVarAdd( uint32_t gameid, map<VarP,string> var_strings );
+    virtual CCallableBotStatusCreate *ThreadedBotStatusCreate( string username, string gamename, string ip, uint16_t hostport, string roc, string tft);
+    virtual CCallableBotStatusUpdate *ThreadedBotStatusUpdate( string server, uint32_t status);
 
     // other database functions
 
@@ -280,6 +282,8 @@ uint32_t MySQLW3MMDPlayerAdd( void *conn, string *error, uint32_t botid, string 
 bool MySQLW3MMDVarAdd( void *conn, string *error, uint32_t botid, uint32_t gameid, map<VarP,int32_t> var_ints );
 bool MySQLW3MMDVarAdd( void *conn, string *error, uint32_t botid, uint32_t gameid, map<VarP,double> var_reals );
 bool MySQLW3MMDVarAdd( void *conn, string *error, uint32_t botid, uint32_t gameid, map<VarP,string> var_strings );
+bool MySQLBotStatusCreate( string username, string gamename, string ip, uint16_t hostport, string roc, string tft);
+bool MySQLBotStatusUpdate( string server, uint32_t status);
 
 //
 // MySQL Callables
@@ -897,4 +901,31 @@ public:
     }
 };
 
+class CMySQLCallableBotStatusCreate : public CCallableBotStatusCreate, public CMySQLCallable
+{
+public:
+    CMySQLCallableBotStatusCreate( string nUsername, string nGamename, string nIP, uint16_t nHostport, string nRoc, string nTft, void *nConnection, uint32_t nSQLBotID, string nSQLServer, string nSQLDatabase, string nSQLUser, string nSQLPassword, uint16_t nSQLPort ) : CBaseCallable( ), CCallableBotStatusCreate(nUsername, nGamename, nIP, nHostport, nRoc, nTft), CMySQLCallable( nConnection, nSQLBotID, nSQLServer, nSQLDatabase, nSQLUser, nSQLPassword, nSQLPort ) { }
+    virtual ~CMySQLCallableBotStatusCreate( ) { }
+    virtual void operator( )( );
+    virtual void Init( ) {
+        CMySQLCallable :: Init( );
+    }
+    virtual void Close( ) {
+        CMySQLCallable :: Close( );
+    }
+};
+
+class CMySQLCallableBotStatusUpdate : public CCallableBotStatusUpdate, public CMySQLCallable
+{
+public:
+    CMySQLCallableBotStatusUpdate( string nServer, uint32_t nStatus, void *nConnection, uint32_t nSQLBotID, string nSQLServer, string nSQLDatabase, string nSQLUser, string nSQLPassword, uint16_t nSQLPort ) : CBaseCallable( ), CCallableBotStatusUpdate(nServer, nStatus), CMySQLCallable( nConnection, nSQLBotID, nSQLServer, nSQLDatabase, nSQLUser, nSQLPassword, nSQLPort ) { }
+    virtual ~CMySQLCallableBotStatusUpdate( ) { }
+    virtual void operator( )( );
+    virtual void Init( ) {
+        CMySQLCallable :: Init( );
+    }
+    virtual void Close( ) {
+        CMySQLCallable :: Close( );
+    }
+};
 #endif

@@ -10,3 +10,11 @@ ghost++/update_w3mmd_elo/Release/
 *.sdf
 *.opensdf
 *.suo
+ghost++/nbproject/configurations.xml
+ghost++/nbproject/private/CodeAssistancePathMapper.properties
+ghost++/nbproject/private/Default-build.log
+ghost++/nbproject/private/Default.properties
+ghost++/nbproject/private/configurations.xml
+ghost++/nbproject/private/launcher.properties
+ghost++/nbproject/private/private.xml
+ghost++/nbproject/project.xml

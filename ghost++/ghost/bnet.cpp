@@ -66,6 +66,7 @@ CBNET :: CBNET( CGHost *nGHost, string nServer, string nServerAlias, string nBNL
     m_AdminLog = vector<string>();
     transform( LowerServer.begin( ), LowerServer.end( ), LowerServer.begin( ), ::tolower );
     m_GHost->m_CheckForFinishedGames = GetTime();
+    LastUpdateTime = GetTime();
     if( !nServerAlias.empty( ) )
         m_ServerAlias = nServerAlias;
     else if( LowerServer == "useast.battle.net" )
@@ -211,6 +212,12 @@ CBNET :: ~CBNET( )
         m_GHost->m_Callables.push_back( i->second );
 
     for( vector<PairedGameUpdate> :: iterator i = m_PairedGameUpdates.begin( ); i != m_PairedGameUpdates.end( ); ++i )
+        m_GHost->m_Callables.push_back( i->second );
+
+    for( vector<BotStatusUpdate> :: iterator i = m_BotStatusUpdate.begin( ); i != m_BotStatusUpdate.end( ); ++i )
+        m_GHost->m_Callables.push_back( i->second );
+
+    for( vector<BotStatusCreate> :: iterator i = m_BotStatusCreate.begin( ); i != m_BotStatusCreate.end( ); ++i )
         m_GHost->m_Callables.push_back( i->second );
 
     if( m_CallablePList )
@@ -816,6 +823,30 @@ bool CBNET :: Update( void *fd, void *send_fd )
             ++i;
     }
 
+    for( vector<BotStatusUpdate> :: iterator i = m_BotStatusUpdate.begin( ); i != m_BotStatusUpdate.end( ); )
+    {
+        if( i->second->GetReady( ) )
+        {
+            m_GHost->m_DB->RecoverCallable( i->second );
+            delete i->second;
+            i = m_BotStatusUpdate.erase( i );
+        }
+        else
+            ++i;
+    }
+
+    for( vector<BotStatusCreate> :: iterator i = m_BotStatusCreate.begin( ); i != m_BotStatusCreate.end( ); )
+    {
+        if( i->second->GetReady( ) )
+        {
+            m_GHost->m_DB->RecoverCallable( i->second );
+            delete i->second;
+            i = m_BotStatusCreate.erase( i );
+        }
+        else
+            ++i;
+    }
+
     if( GetTime( ) - m_LastLogUpdateTime >= 1800 )
     {
         m_GHost->m_Callables.push_back( m_GHost->m_DB->ThreadedStoreLog( 0, string(), m_AdminLog ) );
@@ -892,6 +923,7 @@ bool CBNET :: Update( void *fd, void *send_fd )
         if( m_Socket->GetError( ) == ECONNRESET && GetTime( ) - m_LastConnectionAttemptTime <= 15 )
             CONSOLE_Print( "[BNET: " + m_ServerAlias + "] warning - you are probably using an IP temporarilythe  banned from battle.net" );
 
+        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 2 ) ) );
         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] waiting 90 seconds to reconnect" );
         m_GHost->EventBNETDisconnected( this );
         delete m_BNLSClient;
@@ -909,6 +941,7 @@ bool CBNET :: Update( void *fd, void *send_fd )
     {
         // the socket was disconnected
 
+        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 3 ) ) );
         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] disconnected from battle.net" );
         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] waiting 90 seconds to reconnect" );
         m_GHost->EventBNETDisconnected( this );
@@ -1003,6 +1036,11 @@ bool CBNET :: Update( void *fd, void *send_fd )
 
     if( m_Socket->GetConnecting( ) &&! m_FakeRealm)
     {
+
+        if(!m_GHost->isCreated) {
+            m_BotStatusCreate.push_back( BotStatusCreate( string( ),m_GHost->m_DB->ThreadedBotStatusCreate( m_UserName, m_GHost->m_AutoHostGameName, m_GHost->m_BindAddress, m_GHost->m_HostPort, m_CDKeyROC, m_CDKeyTFT ) ) );
+            m_GHost->isCreated = true;
+        }
         // we are currently attempting to connect to battle.net
 
         if( m_Socket->CheckConnect( ) )
@@ -1020,12 +1058,14 @@ bool CBNET :: Update( void *fd, void *send_fd )
             while( !m_OutPackets.empty( ) )
                 m_OutPackets.pop( );
 
+            m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 1 ) ) );
             return m_Exiting;
         }
         else if( GetTime( ) - m_LastConnectionAttemptTime >= 15 )
         {
             // the connection attempt timed out (15 seconds)
 
+            m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 3 ) ) );
             CONSOLE_Print( "[BNET: " + m_ServerAlias + "] connect timed out" );
             CONSOLE_Print( "[BNET: " + m_ServerAlias + "] waiting 90 seconds to reconnect" );
             m_GHost->EventBNETConnectTimedOut( this );
@@ -1068,6 +1108,11 @@ bool CBNET :: Update( void *fd, void *send_fd )
         m_WaitingToConnect = false;
         m_LastConnectionAttemptTime = GetTime( );
         return m_Exiting;
+    }
+
+    if( GetTime( ) - LastUpdateTime >= 10 ) {
+        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 1 ) ) );
+        LastUpdateTime = GetTime( );
     }
 
     return m_Exiting;
@@ -1265,9 +1310,11 @@ void CBNET :: ProcessPackets( )
                     {
                     case CBNETProtocol :: KR_ROC_KEY_IN_USE:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - ROC CD key in use by user [" + m_Protocol->GetKeyStateDescription( ) + "], disconnecting" );
+                        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 4 ) ) );
                         break;
                     case CBNETProtocol :: KR_TFT_KEY_IN_USE:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - TFT CD key in use by user [" + m_Protocol->GetKeyStateDescription( ) + "], disconnecting" );
+                        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 5 ) ) );
                         break;
                     case CBNETProtocol :: KR_OLD_GAME_VERSION:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - game version is too old, disconnecting" );
@@ -1312,6 +1359,7 @@ void CBNET :: ProcessPackets( )
                 else
                 {
                     CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - invalid username, disconnecting" );
+                    m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 6 ) ) );
                     m_Socket->Disconnect( );
                     delete Packet;
                     return;
@@ -1335,6 +1383,7 @@ void CBNET :: ProcessPackets( )
                 else
                 {
                     CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - invalid password, disconnecting" );
+                    m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 6 ) ) );
 
                     // try to figure out if the user might be using the wrong logon type since too many people are confused by this
 
@@ -2046,7 +2095,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
         //
         // !SETPERMISSION
         //
-        if( ( Command == "setp" || Command == "sep" || Command == "setpermission" ) && IsLevel( User ) == 10  )
+        if( ( Command == "setp" || Command == "sep" || Command == "setpermission" ) && IsLevel( User ) >= 9  )
         {
             string Name;
             string NewLevel;
@@ -2098,7 +2147,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
         //
         // !PERMISSION
         //
-        else if ( ( Command == "perm" || Command == "permission" ) && IsLevel( User ) == 10 )
+        else if ( ( Command == "perm" || Command == "permission" ) && IsLevel( User ) >= 9 )
         {
             string StatsUser = User;
             if( !Payload.empty() )
@@ -2269,7 +2318,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
         // !IPRANGEBAN
         // PLEASE USE THIS BAN WITH CAUTION, IF YOU ARE NOT SURE WITH SUBNET's OR SIMILAIR THINGS, DON'T USE IT!
         //
-        else if( ( Command == "irb" || Command == "iprangeadd"  || Command == "iprangeban" ) && !Payload.empty( ) && IsLevel( User ) == 10 && m_GHost->m_ChannelBotOnly )
+        else if( ( Command == "irb" || Command == "iprangeadd"  || Command == "iprangeban" ) && !Payload.empty( ) && IsLevel( User ) >= 9 && m_GHost->m_ChannelBotOnly )
         {
             string VictimIP;
             string Reason;
@@ -2890,7 +2939,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
 
         else if( Command == "exit" || Command == "quit" )
         {
-            if( IsLevel( User ) == 10 || ForceRoot )
+            if( IsLevel( User ) >= 9 || ForceRoot )
             {
                 if( Payload == "nice" )
                     m_GHost->m_ExitingNice = true;
@@ -3354,7 +3403,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
 
         else if( Command == "reload" )
         {
-            if( IsLevel( User ) == 10 || ForceRoot )
+            if( IsLevel( User ) >= 9 || ForceRoot )
             {
                 QueueChatCommand( m_GHost->m_Language->ReloadingConfigurationFiles( ), User, Whisper );
                 m_GHost->ReloadConfigs( );
@@ -3622,7 +3671,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
 
         if( Command == "games" || Command == "g" )
         {
-            m_PairedGameUpdates.push_back( PairedGameUpdate( Whisper ? User : string( ), m_GHost->m_DB->ThreadedGameUpdate("", "", "", "", 0, "", 0, 0, 0, false ) ) );
+            m_PairedGameUpdates.push_back( PairedGameUpdate( Whisper ? User : string( ), m_GHost->m_DB->ThreadedGameUpdate("", Payload, "", "", 0, "", 0, 0, 0, false ) ) );
         }
 
         //
@@ -4276,8 +4325,8 @@ uint32_t CBNET :: IsLevel( string name )
 
 string CBNET :: GetLevelName( uint32_t level )
 {
-    if( level != 0 )
-        return m_GHost->m_Ranks[level-1];
+    if( level < 0 || level > 10 )
+        return m_GHost->m_Ranks[level];
     else
         return "unknown";
 }

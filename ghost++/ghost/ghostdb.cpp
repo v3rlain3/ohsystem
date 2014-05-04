@@ -260,6 +260,17 @@ bool CGHostDB :: W3MMDVarAdd( uint32_t gameid, map<VarP,string> var_strings )
     return false;
 }
 
+bool CGHostDB :: BotStatusCreate( string username, string gamename, string ip, uint16_t hostport, string roc, string tft)
+{
+    return false;
+}
+
+bool CGHostDB :: BotStatusUpdate( string serveralias, uint32_t status)
+{
+    return false;
+}
+
+
 void CGHostDB :: CreateThread( CBaseCallable *callable )
 {
     callable->SetReady( true );
@@ -475,6 +486,17 @@ CCallableW3MMDVarAdd *CGHostDB :: ThreadedW3MMDVarAdd( uint32_t gameid, map<VarP
     return NULL;
 }
 
+CCallableBotStatusCreate *CGHostDB :: ThreadedBotStatusCreate( string username, string gamename, string ip, uint16_t hostport, string roc, string tft)
+{
+    return NULL;
+}
+
+CCallableBotStatusUpdate *CGHostDB :: ThreadedBotStatusUpdate( string serveralias, uint32_t status)
+{
+    return NULL;
+}
+
+
 //
 // Callables
 //
@@ -488,6 +510,16 @@ void CBaseCallable :: Close( )
 {
     m_EndTicks = GetTicks( );
     m_Ready = true;
+}
+
+CCallableBotStatusCreate :: ~CCallableBotStatusCreate( )
+{
+
+}
+
+CCallableBotStatusUpdate :: ~CCallableBotStatusUpdate( )
+{
+
 }
 
 CCallableRegAdd :: ~CCallableRegAdd( )
@@ -716,8 +748,8 @@ CDBGame :: ~CDBGame( )
 // CDBGamePlayer
 //
 
-CDBGamePlayer :: CDBGamePlayer( uint32_t nID, uint32_t nGameID, string nName, string nIP, uint32_t nSpoofed, string nSpoofedRealm, uint32_t nReserved, uint32_t nLoadingTime, uint32_t nLeft, string nLeftReason, uint32_t nTeam, uint32_t nColour )
-    : m_ID( nID ), m_GameID( nGameID ), m_Name( nName ), m_IP( nIP ), m_Spoofed( nSpoofed ), m_SpoofedRealm( nSpoofedRealm ), m_Reserved( nReserved ), m_LoadingTime( nLoadingTime ), m_Left( nLeft ), m_LeftReason( nLeftReason ), m_Team( nTeam ), m_Colour( nColour )
+CDBGamePlayer :: CDBGamePlayer( uint32_t nID, uint32_t nGameID, string nName, string nIP, uint32_t nSpoofed, string nSpoofedRealm, uint32_t nReserved, uint32_t nLoadingTime, uint32_t nLeft, string nLeftReason, uint32_t nTeam, uint32_t nColour, uint32_t nLeaverLevel )
+    : m_ID( nID ), m_GameID( nGameID ), m_Name( nName ), m_IP( nIP ), m_Spoofed( nSpoofed ), m_SpoofedRealm( nSpoofedRealm ), m_Reserved( nReserved ), m_LoadingTime( nLoadingTime ), m_Left( nLeft ), m_LeftReason( nLeftReason ), m_Team( nTeam ), m_Colour( nColour ), m_LeaverLevel( nLeaverLevel )
 {
 
 }
@@ -746,8 +778,8 @@ CDBGamePlayerSummary :: ~CDBGamePlayerSummary( )
 // CDBStatsPlayerSummary
 //
 
-CDBStatsPlayerSummary :: CDBStatsPlayerSummary( uint32_t nID, string nPlayer, string nPlayerlower, double nScore, uint32_t nGames, uint32_t nWins, uint32_t nLosses, uint32_t nDraw, uint32_t nKills, uint32_t nDeaths, uint32_t nAssists, uint32_t nCreeps, uint32_t nDenies, uint32_t nNeutrals, uint32_t nTowers, uint32_t nRax, uint32_t nStreak, uint32_t nMaxstreak, uint32_t nLosingstreak, uint32_t nMaxlosingstreak, uint32_t nZerodeaths, string nRealm, uint32_t nLeaves, uint32_t nALLCount, uint32_t nRankCount, bool nHidden, string nCountry, string nCountryCode, uint32_t nEXP, double nReputation, string nLanguageSuffix )
-    : m_ID( nID ), m_Player( nPlayer ), m_Playerlower( nPlayerlower ), m_Score( nScore ), m_Games( nGames ), m_Wins( nWins ), m_Losses( nLosses ), m_Draw( nDraw ), m_Kills( nKills ), m_Deaths( nDeaths ), m_Assists( nAssists ), m_Creeps( nCreeps ), m_Denies( nDenies ), m_Neutrals( nNeutrals ), m_Towers( nTowers ), m_Rax( nRax ), m_Streak( nStreak ), m_Maxstreak( nMaxstreak ), m_Losingstreak( nLosingstreak ), m_Maxlosingstreak( nMaxlosingstreak ), m_Zerodeaths( nZerodeaths ), m_Realm( nRealm ), m_Leaves( nLeaves ), m_ALLCount( nALLCount ), m_RankCount( nRankCount ), m_Hidden( nHidden ), m_Country( nCountry ), m_CountryCode( nCountryCode ), m_EXP(nEXP), m_Reputation( nReputation ), m_LanguageSuffix( nLanguageSuffix )
+CDBStatsPlayerSummary :: CDBStatsPlayerSummary( uint32_t nID, string nPlayer, string nPlayerlower, double nScore, uint32_t nGames, uint32_t nWins, uint32_t nLosses, uint32_t nDraw, uint32_t nKills, uint32_t nDeaths, uint32_t nAssists, uint32_t nCreeps, uint32_t nDenies, uint32_t nNeutrals, uint32_t nTowers, uint32_t nRax, uint32_t nStreak, uint32_t nMaxstreak, uint32_t nLosingstreak, uint32_t nMaxlosingstreak, uint32_t nZerodeaths, string nRealm, uint32_t nLeaves, uint32_t nALLCount, uint32_t nRankCount, bool nHidden, string nCountry, string nCountryCode, uint32_t nEXP, double nReputation, string nLanguageSuffix, uint32_t nLeaverLevel )
+    : m_ID( nID ), m_Player( nPlayer ), m_Playerlower( nPlayerlower ), m_Score( nScore ), m_Games( nGames ), m_Wins( nWins ), m_Losses( nLosses ), m_Draw( nDraw ), m_Kills( nKills ), m_Deaths( nDeaths ), m_Assists( nAssists ), m_Creeps( nCreeps ), m_Denies( nDenies ), m_Neutrals( nNeutrals ), m_Towers( nTowers ), m_Rax( nRax ), m_Streak( nStreak ), m_Maxstreak( nMaxstreak ), m_Losingstreak( nLosingstreak ), m_Maxlosingstreak( nMaxlosingstreak ), m_Zerodeaths( nZerodeaths ), m_Realm( nRealm ), m_Leaves( nLeaves ), m_ALLCount( nALLCount ), m_RankCount( nRankCount ), m_Hidden( nHidden ), m_Country( nCountry ), m_CountryCode( nCountryCode ), m_EXP(nEXP), m_Reputation( nReputation ), m_LanguageSuffix( nLanguageSuffix ), m_LeaverLevel( nLeaverLevel )
 {
 
 }

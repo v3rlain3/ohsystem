@@ -454,6 +454,7 @@ CGHost :: CGHost( CConfig *CFG )
     }
 #endif
     m_Language = NULL;
+    isCreated = false;
     m_Exiting = false;
     m_ExitingNice = false;
     m_Enabled = true;
@@ -1477,6 +1478,8 @@ void CGHost :: SetConfigs( CConfig *CFG )
     ReadRoomData();
     if( m_FunCommands )
         LoadInsult( );
+
+    //now update the bot settings and info
 }
 
 void CGHost :: ExtractScripts( )
@@ -1839,7 +1842,7 @@ void CGHost :: LoadRanks( )
         // don't print more than 8 lines
         uint32_t Count = 0;
         string Line;
-        while( !in.eof( ) && Count < 10 )
+        while( !in.eof( ) && Count < 11 )
         {
             getline( in, Line );
             if( Line.empty( ) )
