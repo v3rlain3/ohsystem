@@ -470,7 +470,7 @@ bool CBaseGame :: Update( void *fd, void *send_fd )
                         (*j)->SetReputation (StatsPlayerSummary->GetReputation ());
                         (*j)->SetPlayerLanguage(StatsPlayerSummary->GetLanguageSuffix ());
                         (*j)->SetLeaverLevel(StatsPlayerSummary->GetLeaverLevel());
-                        SendChat((*j)->GetPID( ), m_GHost->m_Language-> WelcomeBackUser( (*j)->GetName( ), (*j)->GetPing(m_GHost->m_LCPings) ) );
+                        SendChat((*j)->GetPID( ), m_GHost->m_Language-> WelcomeBackUser( (*j)->GetName( ), UTIL_ToString( (*j)->GetPing(m_GHost->m_LCPings) ) ) );
                         SendChat((*j)->GetPID( ), " ");
                     }
                 }
@@ -970,7 +970,7 @@ bool CBaseGame :: Update( void *fd, void *send_fd )
             if( m_GHost->m_SimpleAFKScript )
             {
                 uint32_t TimeActive = (*i)->GetTimeActive();
-                if( TimeActive > 0 && ( ( (*i)->GetAFKMarked( ) && ( (TimeNow - TimeActive ) > ( TimeLimit - 180 ) ) ) || ( !(*i)->GetAFKMarked( ) && ( (TimeNow - TimeActive ) > ( TimeLimit - 120 ) ) ) ) && m_Slots[GetSIDFromPID( (*i)->GetPID( ) )].GetTeam() != 12 )
+                if( m_GameLoadedTime < 480 && TimeActive > 0 && ( ( (*i)->GetAFKMarked( ) && ( (TimeNow - TimeActive ) > ( TimeLimit - 180 ) ) ) || ( !(*i)->GetAFKMarked( ) && ( (TimeNow - TimeActive ) > ( TimeLimit - 120 ) ) ) ) && m_Slots[GetSIDFromPID( (*i)->GetPID( ) )].GetTeam() != 12 )
                 {
                     if( (*i)->GetAFKMarked( ) )
                     {
@@ -6590,6 +6590,9 @@ vector<PlayerOfPlayerList> CBaseGame :: GetPlayerListOfGame( ) {
             newPlayer.IP = Player->GetExternalIPString();
             newPlayer.LeftTime = Player->GetLeftTime();
             newPlayer.LeftReason = Player->GetLeftReason();
+            newPlayer.Color = m_Slots[i].GetColour();
+            newPlayer.Team = m_Slots[i].GetTeam();
+            newPlayer.Slot = i;
 
             m_Players.push_back(newPlayer);
         }

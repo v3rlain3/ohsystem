@@ -481,11 +481,13 @@ struct ReservedPlayer {
 struct PlayerOfPlayerList  {
     string Username;
     string Realm;
-    uint32_t Ping;
+    uint16_t Ping;
     string IP;
-    uint32_t Color;
-    uint32_t LeftTime;
+    uint8_t Color;
+    uint16_t LeftTime;
     string LeftReason;
+    uint8_t Team;
+    uint8_t Slot;
 };
 
 #endif
