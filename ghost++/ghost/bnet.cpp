@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -48,10 +47,10 @@ using namespace boost :: filesystem;
 // CBNET
 //
 
-CBNET :: CBNET( CGHost *nGHost, string nServer, string nServerAlias, string nBNLSServer, uint16_t nBNLSPort, uint32_t nBNLSWardenCookie, string nCDKeyROC, string nCDKeyTFT, string nCountryAbbrev, string nCountry, uint32_t nLocaleID, string nUserName, string nUserPassword, string nFirstChannel, char nCommandTrigger, bool nHoldFriends, bool nHoldClan, bool nPublicCommands, unsigned char nWar3Version, BYTEARRAY nEXEVersion, BYTEARRAY nEXEVersionHash, string nPasswordHashType, string nPVPGNRealmName, uint32_t nMaxMessageLength, uint32_t nHostCounterID )
+CBNET :: CBNET( CGHost *nGHost, string nServer, string nServerAlias, string nBNLSServer, uint16_t nBNLSPort, uint32_t nBNLSWardenCookie, string nCDKeyROC, string nCDKeyTFT, string nCountryAbbrev, string nCountry, uint32_t nLocaleID, string nUserName, string nUserPassword, string nFirstChannel, char nCommandTrigger, bool nHoldFriends, bool nHoldClan, bool nPublicCommands, unsigned char nWar3Version, BYTEARRAY nEXEVersion, BYTEARRAY nEXEVersionHash, string nPasswordHashType, string nPVPGNRealmName, uint32_t nMaxMessageLength, uint32_t nHostCounterID, uint8_t nup )
 {
     // todotodo: append path seperator to Warcraft3Path if needed
-
+    UpTime = nup;
     m_GHost = nGHost;
     m_Socket = new CTCPClient( );
     m_Protocol = new CBNETProtocol( );
@@ -108,11 +107,11 @@ CBNET :: CBNET( CGHost *nGHost, string nServer, string nServerAlias, string nBNL
     transform( m_CDKeyROC.begin( ), m_CDKeyROC.end( ), m_CDKeyROC.begin( ), (int(*)(int))toupper );
     transform( m_CDKeyTFT.begin( ), m_CDKeyTFT.end( ), m_CDKeyTFT.begin( ), (int(*)(int))toupper );
 
-    //if( m_CDKeyROC.size( ) != 26 )
-    //      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] warning - your ROC CD key is not 26 characters long and is probably invalid" );
+    if( m_CDKeyROC.size( ) != 26 )
+      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] warning - your ROC CD key is not 26 characters long and is probably invalid" );
 
-    //if( m_GHost->m_TFT && m_CDKeyTFT.size( ) != 26 )
-    //      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] warning - your TFT CD key is not 26 characters long and is probably invalid" );
+    if( m_GHost->m_TFT && m_CDKeyTFT.size( ) != 26 )
+      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] warning - your TFT CD key is not 26 characters long and is probably invalid" );
 
     m_CountryAbbrev = nCountryAbbrev;
     m_Country = nCountry;
@@ -313,13 +312,6 @@ bool CBNET :: Update( void *fd, void *send_fd )
             if( i->second->GetType( ) == "betcheck" )
                 QueueChatCommand( m_GHost->m_Language->BetPoints(i->second->GetUser( ), Result ), i->first, !i->first.empty( ) );
 
-            else if( i->second->GetType( ) == "statsreset" )
-            {
-                if( Result == "success" )
-                    QueueChatCommand( m_GHost->m_Language->SuccessfullyResetedStats( i->second->GetUser( ) ), i->first, !i->first.empty( ) );
-                else
-                    QueueChatCommand( m_GHost->m_Language->NoRecordFoundForUser( i->second->GetUser( ) ), i->first, !i->first.empty( ) );
-            }
             else if( i->second->GetType( ) == "aliascheck" )
             {
                 if( Result != "failed" )
@@ -868,7 +860,8 @@ bool CBNET :: Update( void *fd, void *send_fd )
 #ifdef WIN32
         system("stats.exe");
 #else
-        system("./stats");
+        uint32_t result = system("./stats");
+	if(!result) { CONSOLE_Print("Error. Didn't found stats binary file. Couldn't update stats."); }
 #endif
         m_GHost->m_CheckForFinishedGames = GetTime();
 //              m_GHost->m_FinishedGames--;
@@ -895,7 +888,7 @@ bool CBNET :: Update( void *fd, void *send_fd )
 
     if( m_CallableBanList && m_CallableBanList->GetReady( ) && m_CallableTBRemove && m_CallableTBRemove->GetReady( ) )
     {
-        // CONSOLE_Print( "[BNET: " + m_ServerAlias + "] refreshed ban list (" + UTIL_ToString( m_Bans.size( ) ) + " -> " + UTIL_ToString( m_CallableBanList->GetResult( ).size( ) ) + " bans)" );
+        CONSOLE_Print( "[BNET: " + m_ServerAlias + "] refreshed ban list (" + UTIL_ToString( m_Bans.size( ) ) + " -> " + UTIL_ToString( m_CallableBanList->GetResult( ).size( ) ) + " bans)" );
 
         for( vector<CDBBan *> :: iterator i = m_Bans.begin( ); i != m_Bans.end( ); ++i )
             delete *i;
@@ -941,7 +934,6 @@ bool CBNET :: Update( void *fd, void *send_fd )
     {
         // the socket was disconnected
 
-        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 3 ) ) );
         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] disconnected from battle.net" );
         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] waiting 90 seconds to reconnect" );
         m_GHost->EventBNETDisconnected( this );
@@ -959,6 +951,11 @@ bool CBNET :: Update( void *fd, void *send_fd )
     if( m_Socket->GetConnected( ) )
     {
         // the socket is connected and everything appears to be working properly
+
+        if( GetTime() - LastUpdateTime >= 10) {
+            m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 1 ) ) );
+            LastUpdateTime = GetTime();
+        }
 
         m_Socket->DoRecv( (fd_set *)fd );
         ExtractPackets( );
@@ -1110,11 +1107,6 @@ bool CBNET :: Update( void *fd, void *send_fd )
         return m_Exiting;
     }
 
-    if( GetTime( ) - LastUpdateTime >= 10 ) {
-        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 1 ) ) );
-        LastUpdateTime = GetTime( );
-    }
-
     return m_Exiting;
 }
 
@@ -1195,8 +1187,8 @@ void CBNET :: ProcessPackets( )
             case CBNETProtocol :: SID_GETADVLISTEX:
                 GameHost = m_Protocol->RECEIVE_SID_GETADVLISTEX( Packet->GetData( ) );
 
-                //if( GameHost )
-                //      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] joining game [" + GameHost->GetGameName( ) + "]" );
+                if( GameHost )
+                      CONSOLE_Print( "[BNET: " + m_ServerAlias + "] joining game [" + GameHost->GetGameName( ) + "]" );
 
                 delete GameHost;
                 GameHost = NULL;
@@ -1318,12 +1310,15 @@ void CBNET :: ProcessPackets( )
                         break;
                     case CBNETProtocol :: KR_OLD_GAME_VERSION:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - game version is too old, disconnecting" );
+                        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 7 ) ) );
                         break;
                     case CBNETProtocol :: KR_INVALID_VERSION:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - game version is invalid, disconnecting" );
+                        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 7 ) ) );
                         break;
                     default:
                         CONSOLE_Print( "[BNET: " + m_ServerAlias + "] logon failed - cd keys not accepted, disconnecting" );
+                        m_BotStatusUpdate.push_back( BotStatusUpdate( string( ), m_GHost->m_DB->ThreadedBotStatusUpdate(m_ServerAlias, 8) ) );
                         break;
                     }
 
@@ -1492,6 +1487,9 @@ void CBNET :: ProcessChatEvent( CIncomingChatEvent *chatEvent )
         {
             BotCommand( Message, User, Whisper, false );
         }
+	else if( !Message.empty( ) && Message.substr(0, 1) == "/" && Message.find("pvpgn")!=string::npos && m_GHost->m_PVPGNMode) {
+	    PVPGNCommand( Message );
+	}
     }
     else if( Event == CBNETProtocol :: EID_CHANNEL )
     {
@@ -1533,6 +1531,9 @@ void CBNET :: ProcessChatEvent( CIncomingChatEvent *chatEvent )
             else if( Message.find( "is using Warcraft III The Frozen Throne in a private channel" ) != string :: npos )
                 m_GHost->m_CurrentGame->SendAllChat( m_GHost->m_Language->SpoofDetectedIsInPrivateChannel( UserName ) );
 
+	    string LMessage = Message;
+       	    transform( LMessage.begin( ), LMessage.end( ), LMessage.begin( ), ::tolower );
+       	    
             if( Message.find( "is using Warcraft III The Frozen Throne in game" ) != string :: npos || Message.find( "is using Warcraft III Frozen Throne and is currently in  game" ) != string :: npos )
             {
 
@@ -1540,7 +1541,7 @@ void CBNET :: ProcessChatEvent( CIncomingChatEvent *chatEvent )
                 // this is because when the game is rehosted, players who joined recently will be in the previous game according to battle.net
                 // note: if the game is rehosted more than once it is possible (but unlikely) for a false positive because only two game names are checked
 
-                if( Message.find( m_GHost->m_CurrentGame->GetGameName( ) ) != string :: npos || Message.find( m_GHost->m_CurrentGame->GetLastGameName( ) ) != string :: npos )
+                if( Message.find( m_GHost->m_CurrentGame->GetGameName( ) ) != string :: npos || Message.find( m_GHost->m_CurrentGame->GetLastGameName( ) ) != string :: npos || LMessage.find( m_GHost->m_SpoofPattern ) != string :: npos)
                     m_GHost->m_CurrentGame->AddToSpoofed( m_Server, UserName, false );
                 else
                     m_GHost->m_CurrentGame->SendAllChat( m_GHost->m_Language->SpoofDetectedIsInAnotherGame( UserName ) );
@@ -1581,6 +1582,11 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
         Command = Message.substr( 1 );
 
     transform( Command.begin( ), Command.end( ), Command.begin( ), ::tolower );
+
+    if(!ForceRoot && m_GHost->m_PVPGNMode && Command != "version" ) {
+      CONSOLE_Print("[PVPGN-Mode] User used command but bot is running in pvpgn-mode.");
+      return;
+    }
 
     if( ( IsLevel( User ) >= 5 || ForceRoot ) && m_GHost->m_RanksLoaded )
     {
@@ -2140,7 +2146,8 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
 #ifdef WIN32
             system("stats.exe");
 #else
-            system("./stats");
+        uint32_t result = system("./stats");
+	if(!result) { CONSOLE_Print("Error. Didn't found stats binary file. Couldn't update stats."); }
 #endif
         }
 
@@ -3377,10 +3384,44 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
             m_GHost->CreateGame( m_GHost->m_Map, GAME_PUBLIC, false, Payload, User, User, m_Server, 2, Whisper, m_GHost->m_CurrentGame ? m_GHost->m_CurrentGame->GetHostCounter( ) : 0 );
 
         //
+        // !PUBMM
+        //
+        else if( Command == "pubmm" && !Payload.empty( ) && IsLevel( User ) >= 8 && ! m_GHost->m_ChannelBotOnly ) {
+            string gamename;
+            uint32_t minscore;
+            uint32_t maxscore;
+            stringstream SS;
+            SS << Payload;
+
+            SS >> minscore;
+
+            if( SS.fail( ) || minscore <= 0 || minscore > 100000 )
+                CONSOLE_Print( "[PUBMM] bad input #1 to !PUBMM command." );
+            else {
+                SS >> maxscore;
+                if( SS.fail( ) || maxscore <= 0 || maxscore > 100000)
+                    CONSOLE_Print( "[PUBMM] bad input #2 to !PUBMM command." );
+                else {
+                    if( !SS.eof( ) )
+                    {
+                        getline( SS, gamename );
+                        string :: size_type Start = gamename.find_first_not_of( " " );
+
+                        if( Start != string :: npos )
+                            gamename = gamename.substr( Start );
+                    }
+                    m_GHost->m_MinScoreLimit = minscore;
+                    m_GHost->m_MaxScoreLimit = maxscore;
+                    m_GHost->CreateGame( m_GHost->m_Map, GAME_PUBLIC, false, gamename, User, User, m_Server, 3, Whisper, m_GHost->m_CurrentGame ? m_GHost->m_CurrentGame->GetHostCounter( ) : 0 );
+		}
+            }
+        }
+
+        //
         // !PUBBY (host public game by other player)
         //
 
-        else if( Command == "pubby" && !Payload.empty( ) && IsLevel( User ) >= 8 && ! m_GHost->m_ChannelBotOnly)
+        else if( Command == "pubby" && !Payload.empty( ) && IsLevel( User ) >= 8 && ! m_GHost->m_ChannelBotOnly )
         {
             // extract the owner and the game name
             // e.g. "Varlock dota 6.54b arem ~~~" -> owner: "Varlock", game name: "dota 6.54b arem ~~~"
@@ -3668,16 +3709,16 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
         //
         // !GAMES
         //
-
+/*
         if( Command == "games" || Command == "g" )
         {
             m_PairedGameUpdates.push_back( PairedGameUpdate( Whisper ? User : string( ), m_GHost->m_DB->ThreadedGameUpdate("", Payload, "", "", 0, "", 0, 0, 0, false ) ) );
         }
-
+*/
         //
         // !CHECKBAN
         //
-        else if( Command == "checkban" && Payload.empty( ) )
+        if( Command == "checkban" && Payload.empty( ) )
         {
             CDBBan *Ban = IsBannedName( User );
 
@@ -3987,27 +4028,7 @@ void CBNET :: BotCommand(string Message, string User, bool Whisper, bool ForceRo
             if( !StatsUser.empty( ) && StatsUser.size( ) < 16 && StatsUser[0] != '/' )
                 m_PairedSSs.push_back( PairedSS( Whisper ? User : string( ), m_GHost->m_DB->ThreadedStatsSystem( StatsUser, "betsystem", 0, "betcheck" ) ) );
         }
-
-        //
-        // !STATSRESET      !SR
-        //
-        else if( Command == "statsreset" || Command == "sr" )
-        {
-            if( IsLevel( User ) >= 3 )
-            {
-                string StatsUser = User;
-                if( !Payload.empty( ) && IsLevel( User ) >= 9 )
-                    StatsUser = Payload;
-
-                // check for potential abuse
-
-                if( !StatsUser.empty( ) && StatsUser.size( ) < 16 && StatsUser[0] != '/' )
-                    m_PairedSSs.push_back( PairedSS( Whisper ? User : string( ), m_GHost->m_DB->ThreadedStatsSystem( StatsUser, "", 0, "statsreset" ) ) );
-            }
-            else
-                QueueChatCommand( m_GHost->m_Language->NoPermissionToExecCommand() );
-        }
-
+        
         //
         // !ALIAS      !AL
         //
@@ -4231,6 +4252,8 @@ void CBNET :: QueueGameRefresh( unsigned char state, string gameName, string hos
             if( RandomNumber == 21 )
                 MapGameType = 4294901779;
 
+	    //CONSOLE_Print("[INFO] Using now MapGameType: "+UTIL_ToString(MapGameType));
+
             if( m_GHost->m_Reconnect )
                 m_OutPackets.push( m_Protocol->SEND_SID_STARTADVEX3( state, UTIL_CreateByteArray( MapGameType, false ), map->GetMapGameFlags( ), MapWidth, MapHeight, gameName, hostName, upTime, map->GetMapPath( ), map->GetMapCRC( ), map->GetMapSHA1( ), FixedHostCounter ) );
             else
@@ -4307,17 +4330,10 @@ uint32_t CBNET :: IsLevel( string name )
 {
     transform( name.begin( ), name.end( ), name.begin( ), ::tolower );
 
-    for( vector<string> :: iterator i = m_Permissions.begin( ); i != m_Permissions.end( ); ++i )
+    for( vector<permission> :: iterator i = m_Permissions.begin( ); i != m_Permissions.end( ); ++i )
     {
-        string username;
-        string level;
-        stringstream SS;
-        SS << *i;
-        SS >> username;
-        SS >> level;
-
-        if( username == name )
-            return UTIL_ToUInt32( level );
+        if( i->player == name )
+            return i->level;
     }
 
     return 0;
@@ -4328,7 +4344,7 @@ string CBNET :: GetLevelName( uint32_t level )
     if( level < 0 || level > 10 )
         return m_GHost->m_Ranks[level];
     else
-        return "unknown";
+        return m_GHost->m_Language->Unknown();
 }
 
 CDBBan *CBNET :: IsBannedName( string name )
@@ -4354,7 +4370,7 @@ CDBBan *CBNET :: IsBannedIP( string ip )
         if( (*i)->GetIP( )[0] == ':' )
         {
             string BanIP = (*i)->GetIP( ).substr( 1 );
-            int len = BanIP.length( );
+            size_t len = BanIP.length( );
 
             if( ip.length( ) >= len && ip.substr( 0, len ) == BanIP )
             {
@@ -4379,7 +4395,7 @@ CDBBan *CBNET :: IsBannedIP( string ip )
 void CBNET :: AddBan( string name, string ip, string gamename, string admin, string reason )
 {
     transform( name.begin( ), name.end( ), name.begin( ), ::tolower );
-    m_Bans.push_back( new CDBBan( m_Server, name, ip, "NA", gamename, admin, reason, string(), string(), string(), string(), string() ) );
+    m_Bans.push_back( new CDBBan( 0, m_Server, name, ip, "NA", gamename, admin, reason, string(), string(), string(), string(), string(), 0 ) );
 }
 
 void CBNET :: RemoveBan( string name )
@@ -4411,4 +4427,48 @@ void CBNET :: HoldClan( CBaseGame *game )
         for( vector<CIncomingClanList *> :: iterator i = m_Clans.begin( ); i != m_Clans.end( ); ++i )
             game->AddToReserved( (*i)->GetName( ), 255, 1 );
     }
+}
+
+void CBNET :: PVPGNCommand( string Command )
+{
+    string cmd;
+    string args;
+    string :: size_type argss = Command.find( " " );
+
+    if( argss != string :: npos )
+    {
+        cmd = Command.substr( 1, argss - 1 );
+        args = Command.substr( argss + 1 );
+    }
+    else
+        cmd = Command.substr( 1 );
+
+    transform( cmd.begin( ), cmd.end( ), cmd.begin( ), ::tolower );
+
+    if(cmd=="init") {
+     if(m_GHost->m_PVPGNMode) {
+	m_GHost->m_PVPGNMode = false;
+     } else {
+	m_GHost->m_PVPGNMode = true;
+     }
+     return;
+    }
+    string usr;
+    stringstream SS;
+    SS << args;
+    SS >> usr;
+    SS >> args;
+
+    if(cmd=="host" || cmd=="chost") {}
+    else if(cmd=="unhost") {
+	if(m_GHost->m_CurrentGame){}
+    }
+    else if(cmd=="ping") {}
+    else if(cmd=="swap") {}
+    else if(cmd=="open") {}
+    else if(cmd=="close") {}
+    else if(cmd=="start") {}
+    else if(cmd=="abort"||cmd=="a") {}
+    else if(cmd=="pub") {} // host? or chost?
+    else if(cmd=="priv") {}
 }

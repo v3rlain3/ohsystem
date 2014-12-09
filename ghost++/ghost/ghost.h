@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef GHOST_H
@@ -33,6 +32,7 @@
 class CUDPSocket;
 class CTCPServer;
 class CTCPSocket;
+class CTCPClient;
 class CGPSProtocol;
 class CGCBIProtocol;
 class CCRC32;
@@ -47,7 +47,6 @@ class CMap;
 class CSaveGame;
 class CConfig;
 class CCallableCommandList;
-class CCallableGameUpdate;
 class CCallableFlameList;
 class CCallableForcedGProxyList;
 class CCallableAnnounceList;
@@ -55,11 +54,15 @@ class CCallableDCountryList;
 class CCallableGameDBInit;
 class CCallableDeniedNamesList;
 class CCallableAliasList;
+class OHConnect;
 struct translationTree;
+struct permission;
+struct cachedPlayer;
 
 class CGHost
 {
 public:
+    OHConnect *m_OHC;
     CUDPSocket *m_UDPSocket;				// a UDP socket for sending broadcasts and other junk (used with !sendlan)
     CTCPServer *m_ReconnectSocket;			// listening socket for GProxy++ reliable reconnects
     vector<CTCPSocket *> m_ReconnectSockets;// vector of sockets attempting to reconnect (connected but not identified yet)
@@ -130,8 +133,6 @@ public:
     uint32_t m_LastDCountryUpdate;
     vector<string> m_DCountries;
     CCallableCommandList *m_CallableCommandList;			// threaded database command list in progress
-    uint32_t m_LastGameUpdateTime;			// GetTime when the gamelist was last updated
-    CCallableGameUpdate *m_CallableGameUpdate;// threaded database game update in progress
     CCallableGameDBInit *m_CallableHC;
     CCallableDeniedNamesList *m_CallableDeniedNamesList;
     vector<string> m_DeniedNamePartials;
@@ -202,7 +203,7 @@ public:
     uint32_t m_MinimumLeaverKills;
     uint32_t m_MinimumLeaverDeaths;
     uint32_t m_MinimumLeaverAssists;
-    bool m_DeathsByLeaverReduction;
+    uint32_t m_DeathsByLeaverReduction;
     uint32_t m_BotID;
     bool m_StatsUpdate;
     bool m_MessageSystem;
@@ -233,6 +234,7 @@ public:
     bool m_AllowHighPingSafeDrop;
     uint32_t m_MinPauseLevel;
     uint32_t m_MinScoreLimit;
+    uint32_t m_MaxScoreLimit;
     bool m_AutobanAll;
     string m_WC3ConnectAlias;
     uint32_t m_LastHCUpdate;
@@ -257,11 +259,34 @@ public:
     string m_Website;
     uint32_t m_DisconnectAutoBanTime;
     string m_SharedFilesPath;
-    vector<string> m_PlayerCache;
+    vector<cachedPlayer> m_PlayerCache;
     uint32_t m_BroadCastPort;
     string m_LanCFGPath;
     uint32_t m_FallBackLanguage;
     bool isCreated;
+    uint32_t m_StartTicks;
+    uint32_t m_EndTicks;
+    uint32_t m_MaxTicks;
+    uint32_t m_MinTicks;
+    float m_AVGTicks;
+    uint32_t m_TicksCollection;
+    uint32_t m_TicksCollectionTimer;
+    uint32_t m_Sampler;
+    string m_SpoofPattern;
+    string m_OHCIP;
+    uint32_t m_OHCPort;
+    string m_OHCPass;
+    uint32_t m_DelayGameLoaded;
+    bool m_FountainFarmDetection;
+    bool m_AutokickSpoofer;
+    bool m_OHConnect;
+    bool m_GameOHConnect;
+    bool m_ReadGlobalMySQL;
+    string m_GlobalMySQLPath;
+    bool m_PVPGNMode;
+    uint32_t m_AutoRehostTime;
+    uint32_t m_DenyLimit;
+    uint32_t m_SwapLimit;
 
     CGHost( CConfig *CFG );
     ~CGHost( );
@@ -308,6 +333,8 @@ public:
     bool FindHackFiles( string input );
     bool PlayerCached( string playername );
     void LoadLanguages( );
+    bool CanAccessCommand( string name, string command );
+    virtual void CallGameEnd( string gamename, uint32_t creationtime, uint32_t winner );
 };
 
 struct translationTree {
@@ -315,4 +342,14 @@ struct translationTree {
     CLanguage *m_Translation;
 };
 
+struct permission {
+    string player;
+    uint32_t level;
+    string binaryPermissions;
+};
+
+struct cachedPlayer {
+    string name;
+    uint32_t time;
+};
 #endif

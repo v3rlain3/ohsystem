@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef GAME_H
@@ -74,7 +73,6 @@ protected:
     bool IsAutoBanned( string name );
     uint32_t m_ForfeitTime;						// time that players forfeited, or 0 if not forfeited
     uint32_t m_ForfeitTeam;						// id of team that forfeited
-    uint32_t m_ObservingPlayers;
     uint32_t m_LoosingTeam;
     uint32_t m_LastLeaverTime;
     uint32_t m_BalanceVotes;

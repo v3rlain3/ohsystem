@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef GAMEPLAYER_H
@@ -219,7 +218,13 @@ private:
     uint32_t m_TheThingAmount;
     string m_TheThing;
     uint32_t m_TheThingType;
-    uint32_t m_LeaverLevel;
+    uint32_t m_PenalityLevel;
+    bool m_RequestedSwap;
+    uint8_t m_SwapTarget;
+    uint32_t m_LastAttackCommandToFountain;
+    uint32_t m_FFLevel;
+    uint32_t m_DenyLimit;
+    uint32_t m_SwapLimit;
 
 public:
     CGamePlayer( CGameProtocol *nProtocol, CBaseGame *nGame, CTCPSocket *nSocket, unsigned char nPID, string nJoinedRealm, string nName, BYTEARRAY nInternalIP, bool nReserved );
@@ -296,8 +301,8 @@ public:
     uint32_t GetLeftTime( )                     {
         return m_Left;
     }
-    uint32_t GetLeaverLevel( )                  {
-        return m_LeaverLevel;
+    uint32_t GetPenalityLevel( )                  {
+        return m_PenalityLevel;
     }
 
     queue<BYTEARRAY> *GetLoadInGameData( )		{
@@ -507,7 +512,30 @@ public:
     uint32_t GetTheThingType( ) {
         return m_TheThingType;
     }
-
+    bool GetSwapRequested( ) {
+        return m_RequestedSwap;
+    }
+    uint8_t GetSwapTarget( ) {
+        return m_SwapTarget;
+    }
+    uint32_t GetLastAttackTimeToFountain( ) {
+        return m_LastAttackCommandToFountain;
+    }
+    uint32_t GetFFLevel( ) {
+        return m_FFLevel;
+    }
+    uint32_t GetDenyLimit( ) {
+        return m_DenyLimit;
+    }
+    uint32_t GetSwapLimit( ) {
+        return m_SwapLimit;
+    }
+    void SetDenyLimit( ) {
+	m_DenyLimit--;
+    }
+    void SetSwapLimit( ) {
+	m_SwapLimit--;
+    }
     void SetLeftReason( string nLeftReason )										{
         m_LeftReason = nLeftReason;
     }
@@ -675,8 +703,8 @@ public:
         m_GlobalChatMuted = nGlobalChatMuted;
     }
 
-    void SetLeaverLevel( uint32_t nLeaverLevel ) {
-        m_LeaverLevel = nLeaverLevel;
+    void SetPenalityLevel( uint32_t nLevel ) {
+        m_PenalityLevel = nLevel;
     }
 
     void SetInsultM( string nInsultM )                                                                              {
@@ -752,6 +780,18 @@ public:
     }
     void SetTheThingType(uint32_t nType) {
         m_TheThingType = nType;
+    }
+    void SetSwapRequested( bool nRequestedSwap ) {
+        m_RequestedSwap = nRequestedSwap;
+    }
+    void SetSwapTarget( uint8_t nSwapTarget) {
+        m_SwapTarget = nSwapTarget;
+    }
+    void SetLastAttackCommandToFountain( uint32_t time ) {
+        m_LastAttackCommandToFountain = time;
+    }
+    void SetFFLevel( ) {
+        m_FFLevel++;
     }
 
     // processing functions

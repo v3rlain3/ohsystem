@@ -1,0 +1,20 @@
+language: cpp
+compiler: gcc
+
+# whitelist
+branches:
+ - master
+ 
+before_script: 
+ - sudo apt-get install -qq libboost-all-dev build-essential g++ libmysql++-dev libbz2-dev libgmp3-dev
+ - cd ghost++/bncsutil/src/bncsutil 
+ - make 
+ - sudo make install 
+ - cd ../../../StormLib/stormlib 
+ - make 
+ - sudo make install 
+ - cd ../../ghost 
+ 
+# Change this to your needs
+script: 
+ - make

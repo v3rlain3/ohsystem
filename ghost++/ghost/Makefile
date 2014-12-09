@@ -3,7 +3,7 @@ SYSTEM = $(shell uname)
 C++ = g++
 CC = gcc
 DFLAGS = -DGHOST_MYSQL
-OFLAGS = -O3
+OFLAGS = -O3 -g
 LFLAGS = -L. -L../bncsutil/src/bncsutil/ -L../StormLib/stormlib/  -lbncsutil -lpthread -ldl -lz -lgmp -lStorm -lmysqlclient_r -lboost_date_time -lboost_thread -lboost_system -lboost_filesystem
 CFLAGS =
 
@@ -29,7 +29,7 @@ ifeq ($(SYSTEM),Darwin)
 CFLAGS += -I../mysql/include/
 endif
 
-OBJS = bncsutilinterface.o bnet.o bnetprotocol.o bnlsclient.o bnlsprotocol.o commandpacket.o config.o crc32.o game.o game_base.o gameplayer.o gameprotocol.o gameslot.o gcbiprotocol.o ghost.o ghostdb.o ghostdbmysql.o gpsprotocol.o language.o map.o packed.o replay.o savegame.o sha1.o socket.o stats.o statsdota.o statsw3mmd.o util.o
+OBJS = bncsutilinterface.o bnet.o bnetprotocol.o bnlsclient.o bnlsprotocol.o commandpacket.o config.o crc32.o game.o game_base.o gameplayer.o gameprotocol.o gameslot.o gcbiprotocol.o ghost.o ghostdb.o ghostdbmysql.o gpsprotocol.o language.o map.o ohconnect.o packed.o replay.o savegame.o sha1.o socket.o stats.o statsdota.o statsw3mmd.o util.o
 COBJS =
 PROGS = ./ghost++
 
@@ -65,12 +65,13 @@ gameplayer.o: ghost.h includes.h util.h language.h socket.h commandpacket.h bnet
 gameprotocol.o: ghost.h includes.h util.h crc32.h gameplayer.h gameprotocol.h game_base.h
 gameslot.o: ghost.h includes.h gameslot.h
 gcbiprotocol.o: gcbiprotocol.h ghost.h util.h
-ghost.o: ghost.h includes.h util.h crc32.h sha1.h config.h language.h socket.h ghostdb.h ghostdbmysql.h bnet.h map.h packed.h savegame.h gameplayer.h gameprotocol.h gpsprotocol.h game_base.h game.h gcbiprotocol.h
+ghost.o: ghost.h includes.h util.h crc32.h sha1.h config.h language.h socket.h ghostdb.h ghostdbmysql.h bnet.h map.h packed.h savegame.h gameplayer.h gameprotocol.h gpsprotocol.h game_base.h game.h gcbiprotocol.h ohconnect.h
 ghostdb.o: ghost.h includes.h util.h config.h ghostdb.h
 ghostdbmysql.o: ghost.h includes.h util.h config.h ghostdb.h ghostdbmysql.h
 gpsprotocol.o: ghost.h util.h gpsprotocol.h
 language.o: ghost.h includes.h config.h language.h
 map.o: ghost.h includes.h util.h crc32.h sha1.h config.h map.h
+ohconnect.o: ghost.h socket.h ohconnect.h
 packed.o: ghost.h includes.h util.h crc32.h packed.h
 replay.o: ghost.h includes.h util.h packed.h replay.h gameprotocol.h
 savegame.o: ghost.h includes.h util.h packed.h savegame.h

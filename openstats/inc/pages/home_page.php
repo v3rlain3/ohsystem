@@ -164,19 +164,19 @@ if (!isset($website) ) { header('HTTP/1.1 404 Not Found'); die; }
 	  $LivePlayers = array();
 	   while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
 	  
-	  $LiveGamesData[$c]["id"]  = ($row["id"]);
 	  $LiveGamesData[$c]["botid"]  = ($row["botid"]);
+	  $LiveGamesData[$c]["lobby"]  = ($row["lobby"]);
+	  $LiveGamesData[$c]["duration"]  = ($row["duration"]);
+	  $LiveGamesData[$c]["map_type"]  = ($row["map_type"]);
 	  $LiveGamesData[$c]["gamename"]  = ($row["gamename"]);
 	  $LiveGamesData[$c]["ownername"]  = ($row["ownername"]);
 	  $LiveGamesData[$c]["creatorname"]  = ($row["creatorname"]);
-	  $LiveGamesData[$c]["map"]  = ($row["map"]);
-	  $LiveGamesData[$c]["slotstaken"]  = ($row["slotstaken"]);
-	  $LiveGamesData[$c]["slotstotal"]  = ($row["slotstotal"]);
-	  $LiveGamesData[$c]["usernames"]  = ($row["usernames"]);
-	  $LiveGamesData[$c]["totalgames"]  = ($row["totalgames"]);
-	  $LiveGamesData[$c]["totalplayers"]  = ($row["totalplayers"]);
+
+	  $LiveGamesData[$c]["users"]  = ($row["users"]);
+	  $LiveGamesData[$c]["players"]  = ($row["players"]);
+	  $LiveGamesData[$c]["total"]  = ($row["total"]);
 	  
-	  $LiveGamesData[$c]["players"] = explode("\t", $row["usernames"]);
+	  $LiveGamesData[$c]["allplayers"] = explode("\t", $row["users"]);
 	  
 	  /*
 	  for($i = 0; $i < count( $CurrentPlayers[$c] ) - 2; $i+=3) {

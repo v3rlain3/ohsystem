@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -95,9 +94,9 @@ uint32_t CGHostDB :: penp( string name, string reason, string admin, uint32_t am
     return 0;
 }
 
-vector<string> CGHostDB :: PList( string server )
+vector<permission> CGHostDB :: PList( string server )
 {
-    return vector<string>( );
+    return vector<permission>( );
 }
 
 vector<string> CGHostDB :: FlameList( )
@@ -180,12 +179,12 @@ vector<string> CGHostDB :: CommandList( )
     return vector<string>( );
 }
 
-uint32_t CGHostDB :: GameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver, uint32_t gametype )
+uint32_t CGHostDB :: GameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver, uint32_t gametype, uint32_t lobbytime )
 {
     return 0;
 }
 
-string CGHostDB :: GameUpdate( string map, string gamename, string ownername, string creatorname, uint32_t players, string usernames, uint32_t slotsTotal, uint32_t totalGames, uint32_t totalPlayers, bool add )
+string CGHostDB :: GameUpdate( uint32_t hostcounter, uint32_t lobby, string map_type, uint32_t duration, string gamename, string ownername, string creatorname, string map, uint32_t players, uint32_t total, vector<PlayerOfPlayerList> playerlist )
 {
     return "";
 }
@@ -220,7 +219,7 @@ uint32_t CGHostDB :: DotAGameAdd( uint32_t gameid, uint32_t winner, uint32_t min
     return 0;
 }
 
-uint32_t CGHostDB :: DotAPlayerAdd( uint32_t gameid, uint32_t colour, uint32_t kills, uint32_t deaths, uint32_t creepkills, uint32_t creepdenies, uint32_t assists, uint32_t gold, uint32_t neutralkills, string item1, string item2, string item3, string item4, string item5, string item6, string hero, uint32_t newcolour, uint32_t towerkills, uint32_t raxkills, uint32_t courierkills, uint32_t level )
+uint32_t CGHostDB :: DotAPlayerAdd( uint32_t gameid, uint32_t colour, uint32_t kills, uint32_t deaths, uint32_t creepkills, uint32_t creepdenies, uint32_t assists, uint32_t gold, uint32_t neutralkills, string item1, string item2, string item3, string item4, string item5, string item6, string spell1, string spell2, string spell3, string spell4, string spell5, string spell6, string hero, uint32_t newcolour, uint32_t towerkills, uint32_t raxkills, uint32_t courierkills, uint32_t level )
 {
     return 0;
 }
@@ -401,7 +400,7 @@ CCallableCommandList *CGHostDB :: ThreadedCommandList( )
     return NULL;
 }
 
-CCallableGameAdd *CGHostDB :: ThreadedGameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver, uint32_t gametype, vector<string> lobbylog, vector<string> gamelog, uint32_t databaseid )
+CCallableGameAdd *CGHostDB :: ThreadedGameAdd( string server, string map, string gamename, string ownername, uint32_t duration, uint32_t gamestate, string creatorname, string creatorserver, uint32_t gametype, vector<string> lobbylog, vector<string> gamelog, uint32_t databaseid, uint32_t lobbytime )
 {
     return NULL;
 }
@@ -411,7 +410,7 @@ CCallableGameDBInit *CGHostDB :: ThreadedGameDBInit( vector<CDBBan *> players, s
     return NULL;
 }
 
-CCallableGameUpdate *CGHostDB :: ThreadedGameUpdate( string map, string gamename, string ownername, string creatorname, uint32_t players, string usernames, uint32_t slotsTotal, uint32_t totalGames, uint32_t totalPlayers, bool add )
+CCallableGameUpdate *CGHostDB :: ThreadedGameUpdate( uint32_t hostcounter, uint32_t lobby, string map_type, uint32_t duration, string gamename, string ownername, string creatorname, string map, uint32_t players, uint32_t total, vector<PlayerOfPlayerList> playerlist )
 {
     return NULL;
 }
@@ -441,7 +440,7 @@ CCallableDotAGameAdd *CGHostDB :: ThreadedDotAGameAdd( uint32_t gameid, uint32_t
     return NULL;
 }
 
-CCallableDotAPlayerAdd *CGHostDB :: ThreadedDotAPlayerAdd( uint32_t gameid, uint32_t colour, uint32_t kills, uint32_t deaths, uint32_t creepkills, uint32_t creepdenies, uint32_t assists, uint32_t gold, uint32_t neutralkills, string item1, string item2, string item3, string item4, string item5, string item6, string hero, uint32_t newcolour, uint32_t towerkills, uint32_t raxkills, uint32_t courierkills, uint32_t level )
+CCallableDotAPlayerAdd *CGHostDB :: ThreadedDotAPlayerAdd( uint32_t gameid, uint32_t colour, uint32_t kills, uint32_t deaths, uint32_t creepkills, uint32_t creepdenies, uint32_t assists, uint32_t gold, uint32_t neutralkills, string item1, string item2, string item3, string item4, string item5, string item6, string spell1, string spell2, string spell3, string spell4, string spell5, string spell6, string hero, uint32_t newcolour, uint32_t towerkills, uint32_t raxkills, uint32_t courierkills, uint32_t level )
 {
     return NULL;
 }
@@ -720,7 +719,7 @@ CCallableW3MMDVarAdd :: ~CCallableW3MMDVarAdd( )
 // CDBBan
 //
 
-CDBBan :: CDBBan( string nServer, string nName, string nIP, string nDate, string nGameName, string nAdmin, string nReason, string nExpireDate, string nMonths, string nDays, string nHours, string nMinutes ) : m_Server( nServer ), m_Name( nName ), m_IP( nIP ), m_Date( nDate ), m_GameName( nGameName ), m_Admin( nAdmin ), m_Reason( nReason ), m_ExpireDate( nExpireDate ), m_Months( nMonths ), m_Days( nDays ), m_Hours( nHours ), m_Minutes( nMinutes )
+CDBBan :: CDBBan( uint32_t nID, string nServer, string nName, string nIP, string nDate, string nGameName, string nAdmin, string nReason, string nExpireDate, string nMonths, string nDays, string nHours, string nMinutes, uint32_t nPenalityLevel ) : m_ID( nID ), m_Server( nServer ), m_Name( nName ), m_IP( nIP ), m_Date( nDate ), m_GameName( nGameName ), m_Admin( nAdmin ), m_Reason( nReason ), m_ExpireDate( nExpireDate ), m_Months( nMonths ), m_Days( nDays ), m_Hours( nHours ), m_Minutes( nMinutes ), m_PenalityLevel( nPenalityLevel )
 {
 
 }
@@ -827,7 +826,7 @@ CDBDotAPlayer :: CDBDotAPlayer( ) : m_ID( 0 ), m_GameID( 0 ), m_Colour( 0 ), m_K
 }
 
 
-CDBDotAPlayer :: CDBDotAPlayer( uint32_t nID, uint32_t nGameID, uint32_t nColour, uint32_t nKills, uint32_t nDeaths, uint32_t nCreepKills, uint32_t nCreepDenies, uint32_t nAssists, uint32_t nGold, uint32_t nNeutralKills, string nItem1, string nItem2, string nItem3, string nItem4, string nItem5, string nItem6, string nHero, uint32_t nNewColour, uint32_t nTowerKills, uint32_t nRaxKills, uint32_t nCourierKills, uint32_t nLevel )
+CDBDotAPlayer :: CDBDotAPlayer( uint32_t nID, uint32_t nGameID, uint32_t nColour, uint32_t nKills, uint32_t nDeaths, uint32_t nCreepKills, uint32_t nCreepDenies, uint32_t nAssists, uint32_t nGold, uint32_t nNeutralKills, string nItem1, string nItem2, string nItem3, string nItem4, string nItem5, string nItem6, string nSpell1, string nSpell2, string nSpell3, string nSpell4, string nSpell5, string nSpell6, string nHero, uint32_t nNewColour, uint32_t nTowerKills, uint32_t nRaxKills, uint32_t nCourierKills, uint32_t nLevel )
     : m_ID( nID ), m_GameID( nGameID ), m_Colour( nColour ), m_Kills( nKills ), m_Deaths( nDeaths ), m_CreepKills( nCreepKills ), m_CreepDenies( nCreepDenies ), m_Assists( nAssists ), m_Gold( nGold ), m_NeutralKills( nNeutralKills ), m_Hero( nHero ), m_NewColour( nNewColour ), m_TowerKills( nTowerKills ), m_RaxKills( nRaxKills ), m_CourierKills( nCourierKills ), m_Level( nLevel )
 {
     m_Items[0] = nItem1;
@@ -836,6 +835,12 @@ CDBDotAPlayer :: CDBDotAPlayer( uint32_t nID, uint32_t nGameID, uint32_t nColour
     m_Items[3] = nItem4;
     m_Items[4] = nItem5;
     m_Items[5] = nItem6;
+    m_Spell[0] = nSpell1;
+    m_Spell[1] = nSpell2;
+    m_Spell[2] = nSpell3;
+    m_Spell[3] = nSpell4;
+    m_Spell[4] = nSpell5;
+    m_Spell[5] = nSpell6;
 }
 
 CDBDotAPlayer :: ~CDBDotAPlayer( )
@@ -855,6 +860,20 @@ void CDBDotAPlayer :: SetItem( unsigned int i, string item )
 {
     if( i < 6 )
         m_Items[i] = item;
+}
+
+string CDBDotAPlayer :: GetSpell( unsigned int i )
+{
+    if( i < 6 )
+        return m_Spell[i];
+
+    return string( );
+}
+
+void CDBDotAPlayer :: SetSpell( unsigned int i, string spell )
+{
+    if( i < 6 )
+        m_Spell[i] = spell;
 }
 
 //

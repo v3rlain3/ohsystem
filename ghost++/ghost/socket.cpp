@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -293,6 +292,28 @@ void CTCPSocket :: PutBytes( BYTEARRAY bytes )
     m_SendBuffer += string( bytes.begin( ), bytes.end( ) );
 }
 
+void CTCPSocket :: DoRecvPlain( fd_set *fd ) {
+    if( m_Socket == INVALID_SOCKET || m_HasError || !m_Connected )
+        return;
+
+    if( FD_ISSET( m_Socket, fd ) )
+    {
+        // data is waiting, receive it
+
+        char buffer[20480];
+        int c = recv( m_Socket, buffer, 20480, 0 );
+        if(c!=0) {
+          m_RecvBuffer += string( buffer, c );
+          m_LastRecv = GetTime( );
+        } else {
+            // the other end closed the connection
+
+            CONSOLE_Print( "[TCPSOCKET] closed by remote host" );
+            m_Connected = false;
+        }
+    }
+}
+
 void CTCPSocket :: DoRecv( fd_set *fd )
 {
     if( m_Socket == INVALID_SOCKET || m_HasError || !m_Connected )
@@ -320,7 +341,6 @@ void CTCPSocket :: DoRecv( fd_set *fd )
                     Log.close( );
                 }
             }
-
             m_RecvBuffer += string( buffer, c );
             m_LastRecv = GetTime( );
         }
@@ -337,7 +357,7 @@ void CTCPSocket :: DoRecv( fd_set *fd )
         {
             // the other end closed the connection
 
-            //CONSOLE_Print( "[TCPSOCKET] closed by remote host" );
+            CONSOLE_Print( "[TCPSOCKET] closed by remote host" );
             m_Connected = false;
         }
     }
@@ -369,7 +389,6 @@ void CTCPSocket :: DoSend( fd_set *send_fd )
                     Log.close( );
                 }
             }
-
             m_SendBuffer = m_SendBuffer.substr( s );
             m_LastSend = GetTime( );
         }
@@ -379,7 +398,47 @@ void CTCPSocket :: DoSend( fd_set *send_fd )
 
             m_HasError = true;
             m_Error = GetLastError( );
-            //CONSOLE_Print( "[TCPSOCKET] error (send) - " + GetErrorString( ) );
+            CONSOLE_Print( "[TCPSOCKET] error (send) - " + GetErrorString( ) );
+            return;
+        }
+    }
+}
+
+void CTCPSocket :: DoSendPlain( fd_set *send_fd )
+{
+    if( m_Socket == INVALID_SOCKET || m_HasError || !m_Connected || m_SendBuffer.empty( ) )
+        return;
+    if( FD_ISSET( m_Socket, send_fd ) )
+    {
+        // socket is ready, send it
+
+        int s = send( m_Socket, m_SendBuffer.c_str( ), (int)m_SendBuffer.size( ), MSG_NOSIGNAL );
+
+        if( s > 0 )
+        {
+            // success! only some of the data may have been sent, remove it from the buffer
+
+            if( !m_LogFile.empty( ) )
+            {
+                ofstream Log;
+                Log.open( m_LogFile.c_str( ), ios :: app );
+
+                if( !Log.fail( ) )
+                {
+                    Log << "SEND >>> " << m_SendBuffer.substr(0, s)  << endl;
+                    Log.close( );
+                }
+            }
+            m_SendBuffer = m_SendBuffer.substr( s );
+            m_LastSend = GetTime( );
+        }
+        else if( s == SOCKET_ERROR && GetLastError( ) != EWOULDBLOCK )
+        {
+            // send error
+
+            m_HasError = true;
+            m_Error = GetLastError( );
+            CONSOLE_Print( "[TCPSOCKET] error (send) - " + GetErrorString( ) );
             return;
         }
     }

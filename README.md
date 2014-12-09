@@ -1,4 +1,6 @@
-### [![ScreenShot](http://ohsystem.net/site_logo.png)](http://ohsystem.net/)
+
+![Logo](http://ohsystem.net/storage/img/new_logo.jpg)
+#OpenHosting
 
 OpenHosting is a major modification of the official GHost++ source.
 
@@ -15,6 +17,16 @@ the Free Software Foundation, either version 3 of the License, or
 
 ---
 
+###### Status:
+[![Build Status](https://travis-ci.org/OHSystem/OHSystem.svg?branch=master)](https://travis-ci.org/OHSystem/OHSystem)
+[![Build Status](https://drone.io/github.com/OHSystem/ohsystem/status.png)](https://drone.io/github.com/OHSystem/ohsystem/latest)
+[![Project Status](http://stillmaintained.com/OHSystem/ohsystem.png)](http://stillmaintained.com/OHSystem/ohsystem)
+[![Stories in Ready](https://badge.waffle.io/ohsystem/ohsystem.png?label=ready&title=Ready)](https://waffle.io/ohsystem/ohsystem)
+[![Throughput Graph](https://graphs.waffle.io/ohsystem/ohsystem/throughput.svg)](https://waffle.io/ohsystem/ohsystem/metrics) 
+###### Consider a donation to support us and keep up our work, we sometimes need a cup of :coffee:
+[![ScreenShot](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ARP4DEP4E429Y)
+
+---
 ### Install guide for the bot
 
  - [UNIX](https://github.com/OHSystem/ohsystem/wiki/Installation---UNIX)
@@ -26,57 +38,40 @@ We do not support OS X
 
 ### Visual Features:
 - ####Live games
-  - Show current games via Ajax and join them directly:
-    ![ScreenShot](http://ohsystem.net/public_images/gamelist.PNG)
+  - Show current games via Ajax and join them directly
 
-  - View current running games live and keep track of them with the help of a fancy ajax refresh:
-    ![ScreenShot](http://ohsystem.net/public_images/live_games.PNG)
+  - View current running games live and keep track of them with the help of a fancy ajax refresh
 
   - Manage settings via remote control
 
-    ![ScreenShot](http://ohsystem.net/public_images/remote%20control.PNG)
-    
-  - Or simple chat with friends or players on in the current game:
-    ![ScreenShot](http://ohsystem.net/public_images/chat.PNG)
+  - Or simple chat with friends or players on in the current game
 
 ---
 
 - ####Statistical recording:
-  - Optimized update statistics which does not overload the server:
-    ![ScreenShot](http://ohsystem.net/public_images/update.PNG)
+  - Optimized update statistics which does not overload the server
 
-  - Be able to compare yourself with other people:
-    ![ScreenShot](http://ohsystem.net/public_images/top.PNG)
+  - Be able to compare yourself with other people
     Everything is sortable, including countries!
 
-  - Detailed statistics of each players for the current month (and previous):
-    ![ScreenShot](http://ohsystem.net/public_images/profile.PNG)
+  - Detailed statistics of each players for the current month (and previous)
 
 ---
 
 - ####Easy manage and control able:
-  - Simple control of ban list, with lots of options and fitters:
-    ![ScreenShot](http://ohsystem.net/public_images/banadd.PNG)
-    ![ScreenShot](http://ohsystem.net/public_images/banoptions.PNG)
+  - Simple control of ban list, with lots of options and fitters
   
-  - Easy setup role::
-    ![ScreenShot](http://ohsystem.net/public_images/roles.PNG)
+  - Easy setup role
 
-  - Manage different types of games, where they will each generate separated statistics:
-    ![ScreenShot](http://ohsystem.net/public_images/alias.PNG)
+  - Manage different types of games, where they will each generate separated statistics
 
-  - We support multiply layers and templates to offer a complete hosting system:
-    ![ScreenShot](http://ohsystem.net/public_images/singlegame.PNG)
-    ![ScreenShot](http://ohsystem.net/public_images/tree.PNG)
+  - We support multiply layers and templates to offer a complete hosting system
 
   - Review the entire game log, including lobby:
-    ![ScreenShot](http://ohsystem.net/public_images/logs.PNG)
 
   - For users who are not administrators, and who have the ban option there is a special Moderator panel
-    ![ScreenShot](http://ohsystem.net/public_images/mods.PNG)
   
-  - Easily check for abusive usage by review the admin log:
-    ![ScreenShot](http://ohsystem.net/public_images/adminlog.PNG)
+  - Easily check for abusive usage by review the admin log
     
 ---
 

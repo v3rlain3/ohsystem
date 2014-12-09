@@ -48,7 +48,9 @@
 	WHERE gamestatus<=2 
 	AND gametime>=NOW()-INTERVAL 2 hour
 	$sql
-    ORDER BY gamestatus ASC, gametime DESC $LIMIT" );
+	GROUP BY gameid
+    ORDER BY gamestatus ASC, gametime DESC 
+	$LIMIT" );
     $result = $sth->execute();
     $IDS = array();
     $c = 0;
@@ -60,8 +62,8 @@
 	$GameName = os_strip_quotes($row["gamename"]);
       if ($chatID>=1 ) { 
 	  $IDS[$c]["chatid"] = $chatID;
-	  if ($GameStatus <= 1 ) { $pr = "Lobby";$gamebutton = " LobbyButton"; }
-	  if ($GameStatus == 2 ) { $pr = "Game"; $gamebutton = " GameButton"; }
+	  if ($GameStatus <= 1 ) { $pr = "";$gamebutton = " LobbyButton"; }
+	  if ($GameStatus == 2 ) { $pr = "G"; $gamebutton = " GameButton"; }
 	  $IDS[$c]["chatid"] = $chatID; 
 	  $IDS[$c]["status"] = $pr; 
 	  $IDS[$c]["button"] = $gamebutton;
@@ -76,7 +78,7 @@
   foreach($IDS as $cID) {
   if ( $cID["chatid"] == $selectedGameID) $dis = 'style="color:#E5B16D !important; font-weight:bold;"'; else $dis = '';
   ?>
-<input <?=$dis?> id="b<?=$cID["chatid"]?>" type="button" class="menuButtons<?=$cID["button"]?>" onclick="clearLiveGamesTimer('<?=$cID["botid"]?>', '<?=$cID["chatid"]?>', '<?=$cID["gn"]?>');" value="<?=$cID["status"]?>#<?=$cID["chatid"]?>" />
+<input <?=$dis?> id="b<?=$cID["chatid"]?>" type="button" class="menuButtons<?=$cID["button"]?> btn btn-xs btn-primary" onclick="clearLiveGamesTimer('<?=$cID["botid"]?>', '<?=$cID["chatid"]?>', '<?=$cID["gn"]?>');" value="<?=$cID["status"]?>#<?=$cID["gn"]?>" />
   <?php
   }
 
@@ -174,7 +176,7 @@
 	if (!isset($PlayerListDataArray) ) { $PlayerListDataArray = $DataArray; }
 	echo OS_ParseGameLog( $log_data );
 	} 
-	?>|	|<?=($ID)?>|	|<?=OS_GetPlayerList( $PlayerListDataArray, $chatID, $lastID, $click )?><?php
+	?>|split|<?=($ID)?>|split|<?=OS_GetPlayerList( $PlayerListDataArray, $chatID, $lastID, $click )?><?php
    } 
    else if ( isset($_POST["winchance"]) AND is_numeric($_POST["winchance"]) ) {
    
@@ -249,6 +251,14 @@
 		 $ListPlayersData[$c]["letter"] = "blank";
 		 $ListPlayersData[$c]["country"] = "Reserved";
 		 }
+		 
+	if ( substr($row["ip"], 0, 7) == "204.14." ) {
+	
+	  $ListPlayersData[$c]["country"] = "Canada";
+	  $ListPlayersData[$c]["letter"]  = "CA";
+	
+	}
+		 
 		 $Calculate++; 
 		 
 		 } 
@@ -280,11 +290,15 @@
 	 }
 	 
 	 //if ( $Calculate <=1 ) { die( $lang["gl_compare_no"] ); }
+	 
+	 // class LogCompareLeftTable is 400 px and you hard-code table to be 50% ffs nab
+	 // so 1 table is 200px and another too.
+	 // You know nothing Michael xD
 	 ?>
 
 	 <div class="LogCompareWrapper GameLogSimpleWrapper" id="WinChanceWrapper">
 	 <div class="LogCompareLeftTable">
-	 <table class="LogCompareTableWidth">
+	 <table class="LogCompareTableWidth table table-striped table-hover">
 	 <tr>
 	  <th width="28"></th>
 	  <th width="150"><?=$lang["gl_compare_sentinel"] ?></th>
@@ -309,7 +323,7 @@
 	 </table>
 	 </div>
 	 <div class="LogCompareRightTable">
-	 <table>
+	 <table class="table table-striped table-hover">
 	 <tr>
 	  <th width="28"></th>
 	  <th width="230"><?=$lang["gl_compare_scourge"]?></th>
@@ -413,7 +427,7 @@
 	 if ($TOTAL>=1) $ScourgeWinChanceFixed = ROUND(($ScourgeWP/$TOTAL)*100, 1);   else $ScourgeWinChanceFixed  = 0;
 	 ?>
 	 
-	 <table class="LogCompareResults">
+	 <table class="LogCompareResults table table-striped table-hover">
 	   <tr>
 	     <th width="100"><?=$lang["gl_compare_wl_sentinel"]?></th>
 		 <th width="200"><?=$lang["gl_compare_sentinel_chance_t"]?></th>
@@ -542,130 +556,124 @@
   else if ( isset( $_POST["currentgames"] ) ) {
     global $GameListPatch;
 	
+	if ( file_exists("inc/geoip/geoip.inc") AND !class_exists("GeoIP")  ) {
+	include_once("inc/geoip/geoip.inc");
+	$GeoIPDatabase = geoip_open("inc/geoip/GeoIP.dat", GEOIP_STANDARD);
+	$GeoIP = 1;
+	}
+	
 	if ( isset($GameListPatch ) AND $GameListPatch  == 1 ) {
-	  $sth = $db->prepare( "SELECT * FROM ".OSDB_GAMELIST." ORDER BY gamename ASC"  );
+	  $sth = $db->prepare( "SELECT * FROM ".OSDB_GAMELIST." WHERE lobby = 1 ORDER BY botid ASC, gamename DESC"  );
 	  $result = $sth->execute();
 	  $c=0;
 	  $LiveGamesData = array();
 	  $CurrentPlayers = array();
 	  $LivePlayers = array();
+	  $TotalPlayers = 0;
 	   while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
 	  
-	  $LiveGamesData[$c]["id"]  = ($row["id"]);
 	  $LiveGamesData[$c]["botid"]  = ($row["botid"]);
+	  $LiveGamesData[$c]["lobby"]  = ($row["lobby"]);
+	  $LiveGamesData[$c]["duration"]  = ($row["duration"]);
+	  $LiveGamesData[$c]["map_type"]  = ($row["map_type"]);
 	  $LiveGamesData[$c]["gamename"]  = ($row["gamename"]);
 	  $LiveGamesData[$c]["ownername"]  = ($row["ownername"]);
 	  $LiveGamesData[$c]["creatorname"]  = ($row["creatorname"]);
-	  $LiveGamesData[$c]["map"]  = ($row["map"]);
-	  $LiveGamesData[$c]["slotstaken"]  = ($row["slotstaken"]);
-	  $LiveGamesData[$c]["slotstotal"]  = ($row["slotstotal"]);
-	  $LiveGamesData[$c]["usernames"]  = ($row["usernames"]);
-	  $LiveGamesData[$c]["totalgames"]  = ($row["totalgames"]);
-	  $LiveGamesData[$c]["totalplayers"]  = ($row["totalplayers"]);
-	  
-	  $LiveGamesData[$c]["players"] = explode("\t", $row["usernames"]);
-	  
-	  $c++;
-	  }
-	  
-	 if ( $sth->rowCount()<=0 AND isset($ALT) ) {
-	 $sth = $db->prepare( "SELECT * FROM ".OSDB_GAMESTATUS." WHERE gamestatus = 1 ORDER BY gamename ASC LIMIT 50"  );
-	 $result = $sth->execute();
-	   while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-	  
-	  $LiveGamesData[$c]["id"]           = "";
-	  $LiveGamesData[$c]["botid"]        = "";
-	  $LiveGamesData[$c]["gamename"]     = ($row["gamename"]);
-	  $LiveGamesData[$c]["ownername"]    = "";
-	  $LiveGamesData[$c]["creatorname"]  = "";
-	  $LiveGamesData[$c]["map"]          = "";
-	  $LiveGamesData[$c]["slotstaken"]   = "n/a";
-	  $LiveGamesData[$c]["slotstotal"]   = 1;
-	  $LiveGamesData[$c]["usernames"]    = "";
-	  $LiveGamesData[$c]["totalgames"]   = "";
-	  $LiveGamesData[$c]["totalplayers"] = "";
-	  
-	  $LiveGamesData[$c]["players"] = "Loading. Please wait...									";
-	  $LiveGamesData[$c]["players"] = explode("\t", $LiveGamesData[$c]["players"]);
-	  $c++;
-	  }
-	 
-	  }
-	  
-	?>
- <table>
-  <tr>
-    <th><?=$lang["slots"]?></th>
-    <th><?=$lang["game_name"]?></th>
-	<th><?=$lang["players"]?></th>
-  </tr>
-  <?php
-  $runninggames = 0;
-  $players = 0;
-  $t = 0;
-  foreach ( $LiveGamesData as $LiveGames ) {
-  if (!empty($LiveGames["gamename"]) ) {
-  $runninggames += $LiveGames["totalgames"]-1;
-  $players += $LiveGames["totalplayers"]-1;
-  
-  $LiveGames["slotstaken"] = $LiveGames["slotstaken"]-1;
-  if ($LiveGames["slotstaken"]<=0) $LiveGames["slotstaken"] = 0;
-  
-  $t++;
-  ?>
-  <tr>
-    <td width="60" class="padLeft"><?=( $LiveGames["slotstaken"] )?> / <?=($LiveGames["slotstotal"]-1)?></td>
-    <td width="220">
-	<a href="javascript:;" onclick="ToClipboard('gninfo<?=$t?>')"><?=$LiveGames["gamename"]?></a>
-	<input type="hidden" id="gninfo<?=$t?>" value="<?=$LiveGames["gamename"]?>" />
-	</td>
-	<td>
 
-    <?php
-	    $c = 1; $team = 0;
-		for($i = 0; $i < count( $LiveGames["players"] ) - 2; $i+=3) {
-		
-	 	$username = $LiveGames["players"][$i];
-		$realm    = $LiveGames["players"][$i + 1];
-		$PlayerIP     = $LiveGames["players"][$i + 2];
-		
-		if ( $PlayerIP == $_SERVER["REMOTE_ADDR"] OR (os_is_logged() AND $_SESSION["username"] == $username ) ) {
-		 $xstyle = 'background-color: yellow';
-		} else $xstyle = '';
-		if ( empty($username) OR ( strstr($username, "PeaceMaker") AND strstr($realm, "OHConnect") )) {
-		?><span class="col<?=$c?>" style="font-size:14px;">-</span> <?php
-        //$c++;
-		} else {
-		?>
-		<a title="<?=$realm?>" target="_blank" href="<?=OS_HOME?>?u=<?=$username?>">
-		<span class="col<?=$c?>" style="font-size:11px;<?=$xstyle?>"><?=$username?></span>
-		</a>
-		<?php
-		}
-		$c++;
-		//if ( $c==6 AND $team==0 ) { $c=$c-1; $team = 1; }
-		if ( $c==6 ) echo " | ";
-	 } 
-	?>
-	</td>
-  </tr>
-  <?php } 
-  }
-  ?>
-  <tr>
-   <th colspan="3">
-   <?=$runninggames?> <?=strtolower($lang["games"])?>, 
-   <?=$players?> <?=strtolower($lang["players"])?>.
-   </th>
-  </tr>
-  </table>
-    <?php	
+	  $LiveGamesData[$c]["users"]  = ($row["users"]);
+	  $LiveGamesData[$c]["players"]  = ($row["players"]);
+	  $LiveGamesData[$c]["total"]  = ($row["total"]);
+	  $TotalPlayers+=$row["players"];
+	  $LiveGamesData[$c]["allplayers"] = explode("#", $row["users"]);
 	  
-	}
-	
-	
-  } else if ( isset( $_POST["search"] )) {
-  
+	  $c++;
+	  }
+
+	?>
+ <table class="table table-striped table-hover">
+   <thead>
+     <tr>
+       <th><?=$lang["slots"]?></th>
+       <th><?=$lang["game_name"]?></th>
+       <th><?=$lang["players"]?></th>
+     </tr>
+   </thead>
+   <tbody>
+   <?php
+     $runninggames = 0;
+     $players = 0;
+     $t = 0;
+     foreach ( $LiveGamesData as $LiveGames ) {
+       if (!empty($LiveGames["gamename"]) ) {
+         $runninggames += 1;
+         $players = count($LiveGames["allplayers"]);
+         $LiveGames["total"] = $LiveGames["total"];
+         if ($LiveGames["total"]<=0) $LiveGames["total"] = 0;
+         $t++;
+         ?>
+         <tr>
+           <td width="60"><?=( $players-1 )?> / <?=($LiveGames["total"])?></td>
+    	   <td width="200" style="font-size:13px;">
+	        <a href="javascript:;" onclick="ToClipboard('gninfo<?=$t?>')"><?=$LiveGames["gamename"]?></a>
+	        <input type="hidden" id="gninfo<?=$t?>" value="<?=$LiveGames["gamename"]?>" />
+	      </td>
+	   <td>
+           <?php
+	     $c = 1; $s = 0; if(isset($team)) unset($team);
+	     for($i = 0; $i < count( $LiveGames["allplayers"] ) -1 ; $i++) {
+
+	       $AllData = explode("#", $LiveGames["allplayers"][$i]);
+		   foreach ($AllData as $Data) {
+		    
+			$PlayersData = explode(",", $Data);
+			$s = 0;
+			if(!empty($PlayersData[3])) {
+			$PlayerIP = $PlayersData[6];
+			
+	       $letter   = geoip_country_code_by_addr($GeoIPDatabase, $PlayerIP);
+	       $country  = geoip_country_name_by_addr($GeoIPDatabase, $PlayerIP);
+	       if ($GeoIP == 1 AND empty($letter) ) {
+	       $letter= "blank";
+	       $country = "Reserved";
+	       }
+		   
+		   	if ( substr($PlayerIP, 0, 7) == "204.14." ) {
+		   	$country = "Canada";
+		   	$letter  = "CA";
+		   	}
+			
+            if ( $PlayerIP == $_SERVER["REMOTE_ADDR"] OR (os_is_logged() AND strtolower($_SESSION["username"]) == strtolower($username) ) ) {
+		    $xstyle = 'background-color: yellow';
+	        } else $xstyle = '';
+						if(isset($PlayersData[1]) AND $PlayersData[1] == 1 AND !isset($team) ) { ?> | <?php $team = 1; }
+			$TooltipData = "<strong>".$PlayersData[3]." (".$PlayersData[5]."ms)</strong><div>".$country."</div><div>".$PlayersData[4]."</div>";
+			
+			if($PlayersData[2]>=6) $fixslot = 1; else $fixslot = 0;
+			?>
+			<a <?=ShowToolTip($TooltipData, OS_HOME.'img/flags/'.$letter.'.gif', 210, 21, 15)?> target="_blank" href="<?=OS_HOME?>?u=<?=$PlayersData[3]?>" onclick="hidetooltip();" >
+		    <span class="col<?=($PlayersData[2] - $fixslot)?>" style="font-size:11px;<?=$xstyle?>"><?=$PlayersData[3]?></span>
+		    </a>
+			<?php
+			} else echo "-";
+
+		   } 
+		   $s = 0;
+		   }
+	     } ?>
+	   </td>
+         </tr>
+     <?php } } ?>
+         <tr>
+           <th colspan="3" class="info">
+             <?=$runninggames?> <?=strtolower($lang["games"])?>,
+             <?=$TotalPlayers?> <?=strtolower($lang["players"])?>.
+           </th>
+         </tr>
+       </tbody>
+    </table>
+<?php if ( isset($GeoIP) AND $GeoIP == 1) geoip_close($GeoIPDatabase); ?>
+<?php } else if ( isset( $_POST["search"] )) {
+
 function HighlightKeyword($str, $search) {
     $occurrences = substr_count(strtolower($str), strtolower($search));
     $newstring = $str;
@@ -686,7 +694,7 @@ function HighlightKeyword($str, $search) {
     $search = EscapeStr( trim($_POST["search"]));
 
 	$sth = $db->prepare( "SELECT * FROM `".OSDB_STATS_P."` 
-	WHERE player LIKE ('%".$search."%') GROUP BY player ORDER BY id DESC LIMIT 50");
+	WHERE player LIKE ('%".$search."%') GROUP BY player ORDER BY user_level DESC, id DESC LIMIT 50");
     $result = $sth->execute();
 	?>
 	<div class="LiveSearchWrapper">
@@ -711,8 +719,7 @@ function HighlightKeyword($str, $search) {
   else
   if ( os_is_logged() AND isset($_REQUEST["ratings"]) AND isset($_SESSION["bnet_username"]) ) {
   
-  $blacklist = 'captivated';
-  $bl = explode(',',$blacklist);
+  $bl = explode(',',$RatePlayersBlackList);
   if(in_array( strtolower($_SESSION["bnet_username"]), $bl ) )
   die("<span style='color:red'>Rating is disabled for you!</span>");
   
@@ -739,8 +746,8 @@ function HighlightKeyword($str, $search) {
 		  <div>Enter comment (<b><?=$Player?></b>):</div>
 		  <textarea style="width: 350px; height:70px;" id="rateComment" onkeyup="countit('rateComment')" maxlength="255"></textarea>
 		  <div>
-		  <input type="button" value="Submit" class="menuButtons" onclick="RatePlayer('<?=$Player?>', '<?=$gameid?>', '<?=$rate?>', '<?=$slot?>', 'test' )" /> 
-		  <input type="button" onclick="CloseDiv('ratings-<?=$slot?>')" value="Cancel" class="menuButtons" />
+		  <input class="btn btn-xs btn-primary" type="button" value="Submit" class="menuButtons" onclick="RatePlayer('<?=$Player?>', '<?=$gameid?>', '<?=$rate?>', '<?=$slot?>', 'test' )" /> 
+		  <input class="btn btn-xs btn-prmary" type="button" onclick="CloseDiv('ratings-<?=$slot?>')" value="Cancel" class="menuButtons" />
 		  <div>max. 255 characters</div>
 		  </div>
 		 </div>
@@ -782,14 +789,30 @@ function HighlightKeyword($str, $search) {
 	   	$upd = $db->prepare("UPDATE ".OSDB_STATS_P." SET exp = exp+1 WHERE player = '".$voter."' ");
 		$UPDATE = $upd->execute();
 		
+	    //Get current rate	
+	    $sth2 = $db->prepare("SELECT COUNT(rate) as totalvotes, SUM(rate) as totalrate FROM ".OSDB_GPR." 
+	    WHERE player = '".$Player."'  AND gameid = '".$gameid."' ");
+	    $result2 = $sth2->execute();
+	 
+	    $rates = $sth2->fetch(PDO::FETCH_ASSOC);
+	 
+	    if($rates["totalrate"]>=1)
+	    $rate = $rates["totalrate"]/$rates["totalvotes"]; 
+	    else $rate = 0;		
+		
+		
 		$LeftStars = 5 - $rate;
 	   
 	    for ($x=1; $x<=$rate; $x++) {
-		?><img src="<?=OS_THEME_PATH?>images/star-1.png" width="32" height="32" alt="rating star" /> <?php }
+		?><img src="<?=OS_THEME_PATH?>images/star-1.png" width="24" height="24" alt="rating star" /> <?php }
 		
 		if ( $LeftStars >=1 ) 
 	    for ($x=1; $x<=$LeftStars; $x++) {
-		?><img src="<?=OS_THEME_PATH?>images/star-0.png" width="32" height="32" alt="rating star" /> <?php }
+		?><img src="<?=OS_THEME_PATH?>images/star-0.png" width="24" height="24" alt="rating star" /> <?php }
+		
+		?>
+		( votes: <?=$rates["totalvotes"]?>)
+		<?php
 	   }
 	   
 	

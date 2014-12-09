@@ -420,6 +420,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ohconnect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\packed.cpp"
 				>
 			</File>
@@ -555,6 +559,10 @@
 			</File>
 			<File
 				RelativePath=".\next_combination.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ohconnect.h"
 				>
 			</File>
 			<File

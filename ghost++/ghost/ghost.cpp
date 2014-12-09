@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -41,6 +40,7 @@
 #include "gcbiprotocol.h"
 #include "game_base.h"
 #include "game.h"
+#include "ohconnect.h"
 
 #include <signal.h>
 #include <stdlib.h>
@@ -375,7 +375,6 @@ CGHost :: CGHost( CConfig *CFG )
     m_SHA = new CSHA1( );
     m_CurrentGame = NULL;
     m_FinishedGames = 0;
-    m_CallableGameUpdate = NULL;
     m_CallableFlameList = NULL;
     m_CallableForcedGProxyList = NULL;
     m_CallableAliasList = NULL;
@@ -387,6 +386,11 @@ CGHost :: CGHost( CConfig *CFG )
     m_CheckForFinishedGames = 0;
     m_RanksLoaded = true;
     m_ReservedHostCounter = 0;
+    m_TicksCollectionTimer = GetTicks();
+    m_TicksCollection = 0;
+    m_MaxTicks = 0;
+    m_MinTicks = -1;
+    m_Sampler = 0;
     string DBType = CFG->GetString( "db_type", "mysql" );
     CONSOLE_Print( "[GHOST] opening primary database" );
 
@@ -465,7 +469,6 @@ CGHost :: CGHost( CConfig *CFG )
     m_AutoHostOwner = CFG->GetString( "autohost_owner", string( ) );
     m_LastAutoHostTime = GetTime( );
     m_LastCommandListTime = GetTime( );
-    m_LastGameUpdateTime  = GetTime( );
     m_LastFlameListUpdate = 0;
     m_LastGProxyListUpdate=0;
     m_LastAliasListUpdate = 0;
@@ -545,6 +548,8 @@ CGHost :: CGHost( CConfig *CFG )
         string PasswordHashType = CFG->GetString( Prefix + "custom_passwordhashtype", string( ) );
         string PVPGNRealmName = CFG->GetString( Prefix + "custom_pvpgnrealmname", "PvPGN Realm" );
         uint32_t MaxMessageLength = CFG->GetInt( Prefix + "custom_maxmessagelength", 200 );
+        bool UpTime = CFG->GetInt( Prefix + "uptime", 0 );
+	if(UpTime>180) {UpTime = 180;}
 
         if( Server.empty( ) )
             break;
@@ -584,12 +589,15 @@ CGHost :: CGHost( CConfig *CFG )
 #endif
         }
 
-        m_BNETs.push_back( new CBNET( this, Server, ServerAlias, BNLSServer, (uint16_t)BNLSPort, (uint32_t)BNLSWardenCookie, CDKeyROC, CDKeyTFT, CountryAbbrev, Country, LocaleID, UserName, UserPassword, FirstChannel, BNETCommandTrigger[0], HoldFriends, HoldClan, PublicCommands, War3Version, EXEVersion, EXEVersionHash, PasswordHashType, PVPGNRealmName, MaxMessageLength, i ) );
+        m_BNETs.push_back( new CBNET( this, Server, ServerAlias, BNLSServer, (uint16_t)BNLSPort, (uint32_t)BNLSWardenCookie, CDKeyROC, CDKeyTFT, CountryAbbrev, Country, LocaleID, UserName, UserPassword, FirstChannel, BNETCommandTrigger[0], HoldFriends, HoldClan, PublicCommands, War3Version, EXEVersion, EXEVersionHash, PasswordHashType, PVPGNRealmName, MaxMessageLength, i, UpTime ) );
         counter++;
     }
     CONSOLE_Print( "[GHOST] Adding hardcoded Garena Realm & WC3Connect Realm." );
-    m_BNETs.push_back( new CBNET( this, "Garena", "Garena", string( ), 0, 0, string( ), string( ), string( ), string( ), 1033, string( ), string( ), string( ), m_CommandTrigger, 0, 0, 1, 26, UTIL_ExtractNumbers( string( ), 4 ), UTIL_ExtractNumbers( string( ), 4 ), string( ), string( ), 200, counter+1 ) );
-    m_BNETs.push_back( new CBNET( this, m_WC3ConnectAlias, "WC3Connect", string( ), 0, 0, string( ), string( ), string( ), string( ), 1033, string( ), string( ), string( ), m_CommandTrigger, 0, 0, 1, 26, UTIL_ExtractNumbers( string( ), 4 ), UTIL_ExtractNumbers( string( ), 4 ), string( ), string( ), 200, counter+2 ) );
+    m_BNETs.push_back( new CBNET( this, "Garena", "Garena", string( ), 0, 0, string( ), string( ), string( ), string( ), 1033, string( ), string( ), string( ), m_CommandTrigger, 0, 0, 1, 26, UTIL_ExtractNumbers( string( ), 4 ), UTIL_ExtractNumbers( string( ), 4 ), string( ), string( ), 200, counter+1, 0 ) );
+    m_BNETs.push_back( new CBNET( this, m_WC3ConnectAlias, "WC3Connect", string( ), 0, 0, string( ), string( ), string( ), string( ), 1033, string( ), string( ), string( ), m_CommandTrigger, 0, 0, 1, 26, UTIL_ExtractNumbers( string( ), 4 ), UTIL_ExtractNumbers( string( ), 4 ), string( ), string( ), 200, counter+2, 0 ) );
+
+    if(m_OHConnect)
+      m_OHC = new OHConnect(this, NULL, m_OHCIP, m_OHCPort );
 
     if( m_BNETs.size( ) == 2 ) {
         CONSOLE_Print( "[GHOST] warning - no battle.net connections found in config file. Only the hardcoded" );
@@ -641,8 +649,9 @@ CGHost :: ~CGHost( )
 
     delete m_CurrentGame;
 
-    for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i )
+    for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i ) {
         delete *i;
+    }
 
     delete m_DB;
 
@@ -662,6 +671,7 @@ CGHost :: ~CGHost( )
 
 bool CGHost :: Update( long usecBlock )
 {
+    m_StartTicks = GetTicks();
 
     // todotodo: do we really want to shutdown if there's a database error? is there any way to recover from this?
 
@@ -775,15 +785,19 @@ bool CGHost :: Update( long usecBlock )
     for( vector<CBNET *> :: iterator i = m_BNETs.begin( ); i != m_BNETs.end( ); ++i )
         NumFDs += (*i)->SetFD( &fd, &send_fd, &nfds );
 
+    if(m_OHC && m_OHConnect)
+        NumFDs += m_OHC->SetFD( &fd, &send_fd, &nfds );
+
     // 2. the current game's server and player sockets
 
-    if( m_CurrentGame )
+    if( m_CurrentGame ) {
         NumFDs += m_CurrentGame->SetFD( &fd, &send_fd, &nfds );
-
+    }
     // 3. all running games' player sockets
 
-    for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i )
+    for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i ) {
         NumFDs += (*i)->SetFD( &fd, &send_fd, &nfds );
+    }
 
     // 4. the GProxy++ reconnect socket(s)
 
@@ -892,6 +906,10 @@ bool CGHost :: Update( long usecBlock )
         if( (*i)->Update( &fd, &send_fd ) )
             BNETExit = true;
     }
+
+    if(m_OHC && m_OHConnect)
+        m_OHC->Update( &fd, &send_fd );
+
 
     // update GProxy++ reliable reconnect sockets
 
@@ -1078,36 +1096,6 @@ bool CGHost :: Update( long usecBlock )
         m_LastAutoHostTime = GetTime( );
     }
 
-    //update gamelist every 10 seconds
-    if( !m_CallableGameUpdate && GetTime() - m_LastGameUpdateTime >= 10)
-    {
-        uint32_t TotalGames = m_Games.size( );
-        uint32_t TotalPlayers = 0;
-
-        for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i )
-            TotalPlayers += (*i)->GetNumHumanPlayers( );
-
-        if(m_CurrentGame)
-        {
-            TotalGames++;
-            TotalPlayers += m_CurrentGame->GetNumHumanPlayers( );
-
-            m_CallableGameUpdate = m_DB->ThreadedGameUpdate(m_CurrentGame->GetMapName(), m_CurrentGame->GetGameName(), m_CurrentGame->GetOwnerName(), m_CurrentGame->GetCreatorName(), m_CurrentGame->GetSlotsOccupied(), m_CurrentGame->GetPlayerList( ), m_CurrentGame->GetSlotsOccupied() + m_CurrentGame->GetSlotsOpen(), TotalGames, TotalPlayers, true);
-        }
-        else
-            m_CallableGameUpdate = m_DB->ThreadedGameUpdate("", "", "", "", 0, "", 0, TotalGames, TotalPlayers, true);
-
-        m_LastGameUpdateTime = GetTime();
-    }
-
-    if( m_CallableGameUpdate && m_CallableGameUpdate->GetReady())
-    {
-        m_LastGameUpdateTime = GetTime();
-        m_DB->RecoverCallable( m_CallableGameUpdate );
-        delete m_CallableGameUpdate;
-        m_CallableGameUpdate = NULL;
-    }
-
     // refresh flamelist all 60 minutes
     if( m_FlameCheck && !m_CallableFlameList && ( GetTime( ) - m_LastFlameListUpdate >= 1200 || m_LastFlameListUpdate==0 ) )
     {
@@ -1133,7 +1121,6 @@ bool CGHost :: Update( long usecBlock )
     if( m_CallableAliasList && m_CallableAliasList->GetReady( ))
     {
         m_Aliases = m_CallableAliasList->GetResult( );
-        CONSOLE_Print("Loaded aliases: "+UTIL_ToString(m_Aliases.size()));
         m_DB->RecoverCallable( m_CallableAliasList );
         delete m_CallableAliasList;
         m_CallableAliasList = NULL;
@@ -1243,6 +1230,32 @@ bool CGHost :: Update( long usecBlock )
         m_LastCommandListTime = GetTime();
     }
 
+    if( m_CurrentGame ) {
+        if( ( GetTime() - m_CurrentGame->m_CreationTime ) >= 259200 ) {
+            m_Exiting = true;
+        }
+    }
+
+    m_EndTicks = GetTicks();
+    m_Sampler++;
+    uint32_t SpreadTicks = m_EndTicks - m_StartTicks;
+    if(SpreadTicks > m_MaxTicks) {
+        m_MaxTicks = SpreadTicks;
+    }
+    if(SpreadTicks < m_MinTicks) {
+        m_MinTicks = SpreadTicks;
+    }
+    m_TicksCollection += SpreadTicks;
+    if(GetTicks() - m_TicksCollectionTimer >= 60000) {
+        m_AVGTicks = m_TicksCollection/m_Sampler;
+        m_TicksCollectionTimer = GetTicks();
+        CONSOLE_Print("[OHSystem-Performance-Check] AVGTicks: "+UTIL_ToString(m_AVGTicks, 0)+"ms | MaxTicks: "+UTIL_ToString(m_MaxTicks)+"ms | MinTicks: "+UTIL_ToString(m_MinTicks)+"ms | Updates: "+UTIL_ToString(m_Sampler));
+        m_MinTicks = -1;
+        m_MaxTicks = 0;
+        m_TicksCollection = 0;
+        m_Sampler = 0;
+    }
+
     return m_Exiting || AdminExit || BNETExit;
 }
 
@@ -1268,7 +1281,6 @@ void CGHost :: EventBNETLoggedIn( CBNET *bnet )
 
 void CGHost :: EventBNETGameRefreshed( CBNET *bnet )
 {
-
 }
 
 void CGHost :: EventBNETGameRefreshFailed( CBNET *bnet )
@@ -1450,9 +1462,10 @@ void CGHost :: SetConfigs( CConfig *CFG )
     m_VoteMuting = CFG->GetInt("oh_votemute", 1) == 0 ? false : true;
     m_VoteMuteTime = CFG->GetInt("oh_votemutetime", 180);
     m_AutoEndTime = CFG->GetInt("autoend_votetime", 120);
-    m_AllowHighPingSafeDrop = CFG->GetInt("oh_allowsafedrop", 1);
+    m_AllowHighPingSafeDrop = CFG->GetInt("oh_allowsafedrop", 1) == 0 ? false : true;
     m_MinPauseLevel = CFG->GetInt("oh_minpauselevel", 3);
     m_MinScoreLimit = CFG->GetInt("oh_minscorelimit", 0);
+    m_MaxScoreLimit = CFG->GetInt("oh_maxscorelimit", 0);
     m_AutobanAll = CFG->GetInt("oh_autobanall", 1) == 0 ? false : true;
     m_WC3ConnectAlias = CFG->GetString("wc3connect_alias", "WC3Connect");
     m_ChannelBotOnly = CFG->GetInt("oh_channelbot", 0) == 0 ? false : true;
@@ -1472,6 +1485,25 @@ void CGHost :: SetConfigs( CConfig *CFG )
     m_Website = CFG->GetString("oh_general_domain", "http://ohsystem.net/" );
     m_SharedFilesPath = UTIL_AddPathSeperator( CFG->GetString( "bot_sharedfilespath", string( ) ) );
     m_BroadCastPort = CFG->GetInt("oh_broadcastport", 6112 );
+    m_SpoofPattern = CFG->GetString("oh_spoofpattern", string());
+    m_OHCIP = CFG->GetString("ohc_ip", string());
+    m_OHCPort = CFG->GetInt("ohc_port", 0);
+    m_OHCPass = CFG->GetString("ohc_pass", string());
+    m_OHConnect = CFG->GetInt("ohc_connect", 0 ) == 0 ? false : true;
+    m_GameOHConnect = false;
+    m_DelayGameLoaded = CFG->GetInt("oh_delaygameloaded", 300);
+    m_FountainFarmDetection = CFG->GetInt("oh_fountainfarmdetection", 1) == 0 ? false : true;
+    m_AutokickSpoofer = CFG->GetInt("oh_autokickspoofer", 1) == 0 ? false : true;
+    m_ReadGlobalMySQL = CFG->GetInt("oh_readglobalmysql", 0) == 0 ? false : true;
+    m_GlobalMySQLPath = UTIL_AddPathSeperator( CFG->GetString( "oh_globalmysqlpath", "../" ) );
+    m_PVPGNMode = CFG->GetInt("oh_pvpgn_mode", 0) == 0 ? false : true;
+    m_AutoRehostTime = CFG->GetInt("oh_auto_rehost_time", 0);
+    if(m_AutoRehostTime<10 && m_AutoRehostTime!=0) { 
+	m_AutoRehostTime=10; 
+    }
+    m_DenyLimit = CFG->GetInt("oh_cc_deny_limit", 2);
+    m_SwapLimit = CFG->GetInt("oh_cc_swap_limit", 2);
+ 
     LoadDatas();
     LoadRules();
     LoadRanks();
@@ -1667,6 +1699,13 @@ void CGHost :: CreateGame( CMap *map, unsigned char gameState, bool saveGame, st
         m_EnforcePlayers.clear( );
     }
 
+    if(m_OHConnect && m_OHC ) {
+      if( gameState == GAME_PRIVATE )
+        m_OHC->sendData( OHCHeader::TEXT_FRAME, m_OHC->wrapMessage(m_Language->CreatingPrivateGame( gameName, ownerName ) ));
+      else if( gameState == GAME_PUBLIC )
+        m_OHC->sendData( OHCHeader::TEXT_FRAME, m_OHC->wrapMessage(m_Language->CreatingPublicGame( gameName, ownerName ) ) );
+    }
+
     for( vector<CBNET *> :: iterator i = m_BNETs.begin( ); i != m_BNETs.end( ); ++i )
     {
         if( whisper && (*i)->GetServer( ) == creatorServer )
@@ -1717,25 +1756,6 @@ void CGHost :: CreateGame( CMap *map, unsigned char gameState, bool saveGame, st
         if( (*i)->GetHoldClan( ) )
             (*i)->HoldClan( m_CurrentGame );
     }
-
-    //update mysql current games list
-    if( m_CallableGameUpdate && m_CallableGameUpdate->GetReady()) {
-        m_DB->RecoverCallable( m_CallableGameUpdate );
-        delete m_CallableGameUpdate;
-        m_CallableGameUpdate = NULL;
-        m_LastGameUpdateTime = GetTime();
-    }
-
-    if(!m_CallableGameUpdate) {
-        uint32_t TotalGames = m_Games.size( ) + 1;
-        uint32_t TotalPlayers = 0;
-
-        for( vector<CBaseGame *> :: iterator i = m_Games.begin( ); i != m_Games.end( ); ++i )
-            TotalPlayers += (*i)->GetNumHumanPlayers( );
-
-        m_CallableGameUpdate = m_DB->ThreadedGameUpdate(m_CurrentGame->GetMapName( ), m_CurrentGame->GetGameName(), m_CurrentGame->GetOwnerName(), m_CurrentGame->GetCreatorName(), m_CurrentGame->GetSlotsOccupied(), m_CurrentGame->GetPlayerList( ), m_CurrentGame->GetSlotsOccupied() + m_CurrentGame->GetSlotsOpen(), TotalGames, TotalPlayers, true);
-        m_LastGameUpdateTime = GetTime();
-    }
 }
 
 bool CGHost :: FlameCheck( string message )
@@ -1767,7 +1787,7 @@ bool CGHost :: FlameCheck( string message )
         c++;
     }
 
-    for( int i = 0; i < m_Flames.size( ); )
+    for( size_t i = 0; i < m_Flames.size( ); )
     {
         if( message.find( m_Flames[i] ) != string :: npos )
         {
@@ -1859,6 +1879,10 @@ void CGHost :: LoadRanks( )
     else
     {
         CONSOLE_Print("Error. Unable to read file [ranks.txt]. User levels will not work for this session.");
+        m_RanksLoaded = false;
+    }
+    if(m_Ranks.size() < 10) {
+        CONSOLE_Print("Error. ranks.txt doesn't contain enough levelnames. You require at least 11(Level 0 - Level 10, with 0).");
         m_RanksLoaded = false;
     }
 }
@@ -1968,11 +1992,8 @@ uint32_t CGHost :: GetStatsAliasNumber( string alias ) {
             c++;
         }
 
-        if( m_StatsAlias == 0 ) {
-            CONSOLE_Print( "Did not found any alias for ["+alias+"]" );
-        }
     } else if( m_CurrentGame ) {
-            m_StatsAlias = m_CurrentGame->m_GameAlias;
+        m_StatsAlias = m_CurrentGame->m_GameAlias;
     }
     return m_StatsAlias;
 }
@@ -2008,14 +2029,21 @@ string CGHost :: GetLODMode( string fullmode ) {
         shortenmode = "ap";
     else if(fullmode == "ardms6omfrulabzm")
         shortenmode = "ar";
-    else if(fullmode == "sds6sofnulboabd3")
-        shortenmode = "chev1";
-    else if(fullmode == "ardms6sofnulboab")
-        shortenmode = "chev2";
+    else if(fullmode == "sds6fnulboabd3")
+        shortenmode = "ohs1";
+    else if(fullmode == "ardms6fnulboab")
+        shortenmode = "ohs2";
     else if(fullmode == "aps6fnulboabssosls")
-        shortenmode = "chev3";
-    else if(fullmode == "sdd5s6soulabbofnfrer")
-        shortenmode = "chev5";
+        shortenmode = "ohs3";
+    else if(fullmode == "sdd5s6ulabbofnfrer")
+        shortenmode = "ohs4";
+    else if(fullmode == "mds6d3scfnulbonm")
+        shortenmode = "ohs5";
+    else if(fullmode == "mds6d2omfnulbo")
+        shortenmode = "o1";
+    else if(fullmode == "ardms6boomfnul")
+        shortenmode = "o2";
+
     return shortenmode;
 }
 
@@ -2039,7 +2067,7 @@ string CGHost :: GetMonthInWords( string month ) {
     else if(month=="9")
         return "September";
     else if(month=="10")
-        return "Ocotober";
+        return "October";
     else if(month=="11")
         return "November";
     else if(month=="12")
@@ -2057,7 +2085,7 @@ bool CGHost :: IsForcedGProxy( string input ) {
         if( BanIP[0] == ':' )
         {
             BanIP = BanIP.substr( 1 );
-            int len = BanIP.length( );
+            size_t len = BanIP.length( );
 
             if( input.length( ) >= len && input.substr( 0, len ) == BanIP )
             {
@@ -2107,18 +2135,14 @@ bool CGHost :: FindHackFiles( string input ) {
 }
 
 bool CGHost ::  PlayerCached( string playername ) {
+
     transform( playername.begin( ), playername.end( ), playername.begin( ), ::tolower );
-    for( vector<string> :: iterator i = m_PlayerCache.begin( ); i != m_PlayerCache.end( );)
+
+    for( vector<cachedPlayer> :: iterator i = m_PlayerCache.begin( ); i != m_PlayerCache.end( );)
     {
-        string username;
-        string cachedtime;
-        stringstream SS;
-        SS << *i;
-        SS >> username;
-        SS >> cachedtime;
-        if(  GetTime( ) - UTIL_ToUInt32( cachedtime ) <= 7200 )
+        if(  GetTime( ) - i->time <= 7200 )
         {
-            if( username == playername )
+            if( i->name == playername )
                 return true;
 
             i++;
@@ -2130,6 +2154,29 @@ bool CGHost ::  PlayerCached( string playername ) {
     return false;
 }
 
+bool CGHost :: CanAccessCommand( string name, string command ) {
+    transform( name.begin( ), name.end( ), name.begin( ), ::tolower );
+
+    for( vector<CBNET *> :: iterator i = m_BNETs.begin( ); i != m_BNETs.end( ); ++i ) {
+	for( vector<permission> :: iterator j = (*i)->m_Permissions.begin( ); j != (*i)->m_Permissions.end( ); ++j ) {
+            if( j->player == name ) {
+		string bin = j->binaryPermissions;
+		if(    (command=="ping" && bin.substr(0,1) == "1" )
+		    || (command=="from" && bin.substr(1,1) == "1" )
+                    || (command=="drop" && bin.substr(2,1) == "1" )
+                    || ((command=="mute"||command=="unmute") && bin.substr(3,1) == "1" )
+                    || (command=="swap" && bin.substr(4,1) == "1" )
+                    || (command=="deny" && bin.substr(5,1) == "1" )
+                    || (command=="insult" && bin.substr(6,1) == "1" )
+                    || (command=="forcemode" && bin.substr(7,1) == "1" )
+                    || (command=="ppadd" && bin.substr(8,1) == "1" )
+                  )
+                return true;
+	    }
+    	}
+    }
+    return false;
+}
 void CGHost :: LoadLanguages( ) {
     /*
     try
@@ -2173,3 +2220,16 @@ void CGHost :: LoadLanguages( ) {
     }
     */
 }
+
+void CGHost :: CallGameEnd( string gamename, uint32_t creationtime, uint32_t winner ) {
+        if(!m_OHConnect ) { return; }
+	if(!m_OHC->getConnected( )) { return; }
+	uint32_t GameTime = GetTime( ) - creationtime;
+	uint32_t GameMin = GameTime / 60;
+	uint32_t GameSec = GameTime % 60;
+
+	string Winner = winner == 1 ? "Sentinel" : ( winner == 2 ? "Scourge" : "unknown" );
+	string message = "["+gamename+"] Game finished. Game Length: "+UTIL_ToString(GameMin)+"m "+UTIL_ToString(GameSec)+"s. Winner: "+Winner+".";
+	m_OHC->sendData( OHCHeader::TEXT_FRAME, m_OHC->wrapMessage(message));
+}
+

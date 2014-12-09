@@ -11,20 +11,20 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef GAME_BASE_H
 #define GAME_BASE_H
 
 #include "gameslot.h"
+#include "ghostdb.h"
 
 //
 // CBaseGame
@@ -60,7 +60,9 @@ class CDBInbox;
 class CCallableInboxSummaryCheck;
 class CCallableGamePlayerAdd;
 struct ReservedPlayer;
-struct PlayerOfPlayerList;
+class CCallableGameUpdate;
+class OHConnect;
+struct DeniedPlayer;
 
 typedef pair<string,CCallablePWCheck *> PairedPWCheck;
 typedef pair<string,CCallablepm *> Pairedpm;
@@ -75,6 +77,7 @@ typedef pair<string,CCallableGamePlayerAdd *> PairedGPAdd;
 class CBaseGame
 {
 public:
+    OHConnect *m_OHC;
     CGHost *m_GHost;
     vector<ReservedPlayer> m_ReservedPlayers;
 
@@ -94,6 +97,7 @@ protected:
     vector<PairedBanCheck2> m_PairedBanCheck2s;
     vector<PairedLogUpdate> m_PairedLogUpdates;
     vector<PairedINCheck> m_PairedINChecks;       // vector of paired threaded database ingame checks in progress
+    CCallableGameUpdate *m_GameUpdate;// threaded database game update in progress
     CCallableGameDBInit *m_CallableGameDBInit;
     queue<CIncomingAction *> m_Actions;				// queue of actions to be sent
     vector<string> m_Reserved;						// vector of player names with reserved slots (from the !hold command)
@@ -130,6 +134,7 @@ protected:
     uint32_t m_SyncCounter;							// the number of actions sent so far (for determining if anyone is lagging)
     uint32_t m_LastPingTime;						// GetTime when the last ping was sent
     uint32_t m_LastRefreshTime;						// GetTime when the last game refresh was sent
+    uint32_t m_LastReservedRefreshTime;
     uint32_t m_LastDownloadTicks;					// GetTicks when the last map download cycle was performed
     uint32_t m_DownloadCounter;						// # of map bytes downloaded in the last second
     uint32_t m_LastDownloadCounterResetTicks;		// GetTicks when the download counter was last reset
@@ -165,7 +170,6 @@ protected:
     bool m_AutoSave;								// if we should auto save the game before someone disconnects
     bool m_MatchMaking;								// if matchmaking mode is enabled
     bool m_LocalAdminMessages;						// if local admin messages should be relayed or not
-    uint32_t m_DatabaseID;                          // the ID number from the database, which we'll use to save replay
     string m_GetMapType;							// map_type
     uint32_t m_LastLogDataUpdate;
     bool m_Balanced;
@@ -174,7 +178,7 @@ protected:
     bool m_SoftGameOver;
     uint32_t m_LastProcessedTicks;
     bool m_SendAnnounce;
-    vector<string> m_Denied;					//vector for denied Users
+    vector<DeniedPlayer> m_Denied;					//vector for denied Users
     bool m_LimitCountries;
     bool m_DenieCountries;
     vector<string> m_LimitedCountries;
@@ -206,11 +210,16 @@ protected:
     uint32_t m_PartTime;
     string m_LobbyLanguage;
     uint32_t m_LastGameUpdateTime;					// last time game update database callable
+	bool m_ForcedMode;
+	uint32_t m_ForcedGameMode;
+
+    uint32_t m_ObservingPlayers;
 
 public:
     CBaseGame( CGHost *nGHost, CMap *nMap, CSaveGame *nSaveGame, uint16_t nHostPort, unsigned char nGameState, string nGameName, string nOwnerName, string nCreatorName, string nCreatorServer, uint32_t nGameType, uint32_t nHostCounter );
     virtual ~CBaseGame( );
 
+    uint32_t m_DatabaseID;                          // the ID number from the database, which we'll use to save replay
     vector<string> m_ModesToVote;                                           // modes which are possible to vote in the current game
     CMap *m_Map;
     uint16_t m_HostPort;                                                    // the port to host games on
@@ -467,28 +476,24 @@ public:
     string m_lGameAliasName;
     virtual void StartVoteMode( );
     void GetVotingModes( string allmodes );
-	virtual void DoGameUpdate(bool reset);
+    virtual void DoGameUpdate(bool reset);
     virtual vector<PlayerOfPlayerList> GetPlayerListOfGame( );
+    virtual void BanPlayerByPenality( string player, string playerid, string admin, uint32_t points, string reason );
+    virtual bool AllSlotsOccupied();
+    void DenyPlayer( string name, string ip, bool perm );
 };
 
 struct ReservedPlayer {
     unsigned char SID;
+    unsigned char PID;
     string Name;
     uint32_t Time;
     uint32_t Level;
 };
-
-struct PlayerOfPlayerList  {
-    string Username;
-    string Realm;
-    uint16_t Ping;
+struct DeniedPlayer {
+    string Name;
     string IP;
-    uint8_t Color;
-    uint16_t LeftTime;
-    string LeftReason;
-    uint8_t Team;
-    uint8_t Slot;
+    uint32_t Time;
 };
-
 #endif
 

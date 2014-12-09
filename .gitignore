@@ -1,4 +1,7 @@
 *.user
+*.o
+*.so
+*.log
 ghost++/ghost.sdf
 ghost++/ghost.suo
 ghost++/Release MySQL/
@@ -7,6 +10,7 @@ ghost++/ghost/Release MySQL/
 ghost++/update_dota_elo/Release/
 ghost++/update_stats/Release/
 ghost++/update_w3mmd_elo/Release/
+ghost++/ghost/statsdota.cpp
 *.sdf
 *.opensdf
 *.suo
@@ -18,3 +22,4 @@ ghost++/nbproject/private/configurations.xml
 ghost++/nbproject/private/launcher.properties
 ghost++/nbproject/private/private.xml
 ghost++/nbproject/project.xml
+openstats/img/flags/Thumbs.db

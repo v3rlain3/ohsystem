@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef STATS_H
@@ -51,6 +50,7 @@ public:
     virtual bool ProcessAction( CIncomingAction *Action );
     virtual void Save( CGHost *GHost, CGHostDB *DB, uint32_t GameID );
     virtual void SetWinner( uint32_t nWinner ) {}
+    inline uint32_t GetWinner( ) {}
     virtual void LockStats( ) {
         m_Locked = true;
     }

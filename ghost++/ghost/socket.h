@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef SOCKET_H
@@ -106,13 +105,13 @@ extern int GetLastError( );
 class CSocket
 {
 protected:
-    SOCKET m_Socket;
     struct sockaddr_in m_SIN;
     bool m_HasError;
     int m_Error;
     string m_CachedHostName;
 
 public:
+    SOCKET m_Socket;
     CSocket( );
     CSocket( SOCKET nSocket, struct sockaddr_in nSIN );
     ~CSocket( );
@@ -176,7 +175,9 @@ public:
         return m_LastSend;
     }
     virtual void DoRecv( fd_set *fd );
+    virtual void DoRecvPlain( fd_set *fd );
     virtual void DoSend( fd_set *send_fd );
+    virtual void DoSendPlain( fd_set *send_fd );
     virtual void Disconnect( );
     virtual void SetNoDelay( bool noDelay );
     virtual void SetLogFile( string nLogFile )	{

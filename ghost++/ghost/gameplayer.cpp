@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -236,7 +235,8 @@ CGamePlayer :: CGamePlayer( CGameProtocol *nProtocol, CBaseGame *nGame, CTCPSock
     m_LoggedIn( false ), m_Spoofed( false ), m_PasswordProt( 0 ), m_Registered( false ), m_Reserved( nReserved ), m_WhoisShouldBeSent( false ), m_WhoisSent( false ), m_DownloadAllowed( false ), m_DownloadStarted( false ), m_DownloadFinished( false ), m_FinishedLoading( false ), m_Lagging( false ),
     m_DropVote( false ), m_KickVote( false ), m_Muted( false ), m_LeftMessageSent( false ), m_GProxy( false ), m_GProxyDisconnectNoticeSent( false ), m_GProxyReconnectKey( rand( ) ), m_LastGProxyAckTime( 0 ), m_Autoban( false ), m_Locked( false ), m_ForfeitVote( false ), m_DrawVote( false ), m_TimeActive( 0 ), m_UsedPause( false ), m_PauseTried( 0 ), m_CLetter( "??" ), m_Country( "unknown" ), m_TheThingAmount( 0 ), m_TheThing( "" ), m_TheThingType( 0 ), m_Count( 0 ), m_Silence( false ), m_HasLeft( false ),
     m_AFKMarked( false ), m_SafeDrop( false ), m_FeedLevel( 0 ), m_VKTimes( 0 ), m_HighPingTimes( 0 ), m_AnnounceTime( GetTime( ) ), m_Level( 0 ), m_LevelName( "unknown" ), m_StartVoted( false ), m_GlobalChatMuted( false ), m_InsultM( "" ), m_DownloadTicks( 0 ), m_Checked( 0 ), m_VotedForInterruption( false ),
-    m_VotedMode( 0 ), m_NoLag( false ), m_ActionCounter( 0 ), m_FirstPartOfMinute( 0 ), m_SecondPartOfMinute( 0 ), m_ThirdPartOfMinute( 0 ), m_FourthPartOfMinute( 0 ), m_FifthPartOfMinute( 0 ), m_SixthPartOfMinute( 0 ), m_AFKWarnings( 0 ), m_LastAfkWarn( 0 ), m_EXP( 0 ), m_ID( 0 ), m_VotedForBalance(false), m_Reputation( 0.00 ), m_PlayerLanguage( "en" ), m_LeaverLevel( 0 )
+    m_VotedMode( 0 ), m_NoLag( false ), m_ActionCounter( 0 ), m_FirstPartOfMinute( 0 ), m_SecondPartOfMinute( 0 ), m_ThirdPartOfMinute( 0 ), m_FourthPartOfMinute( 0 ), m_FifthPartOfMinute( 0 ), m_SixthPartOfMinute( 0 ), m_AFKWarnings( 0 ), m_LastAfkWarn( 0 ), m_EXP( 0 ), m_ID( 0 ), m_VotedForBalance(false), m_Reputation( 0.00 ), m_PlayerLanguage( "en" ), m_PenalityLevel( 0 ),
+	m_RequestedSwap(false), m_SwapTarget(255), m_LastAttackCommandToFountain(GetTime()), m_FFLevel(0), m_Cookies( 0 ), m_DenyLimit( m_Game->m_GHost->m_DenyLimit ), m_SwapLimit( m_Game->m_GHost->m_SwapLimit )
 {
 
 }
@@ -247,7 +247,8 @@ CGamePlayer :: CGamePlayer( CPotentialPlayer *potential, unsigned char nPID, str
     m_LoggedIn( false ), m_Spoofed( false ), m_PasswordProt( 0 ), m_Registered( false ), m_Reserved( nReserved ), m_WhoisShouldBeSent( false ), m_WhoisSent( false ), m_DownloadAllowed( false ), m_DownloadStarted( false ), m_DownloadFinished( false ), m_FinishedLoading( false ), m_Lagging( false ),
     m_DropVote( false ), m_KickVote( false ), m_Muted( false ), m_LeftMessageSent( false ), m_GProxy( false ), m_GProxyDisconnectNoticeSent( false ), m_GProxyReconnectKey( rand( ) ), m_LastGProxyAckTime( 0 ), m_Autoban( false ), m_Locked( false ), m_ForfeitVote( false ), m_DrawVote( false ), m_TimeActive( 0 ), m_UsedPause( false ), m_PauseTried( 0 ), m_CLetter( "??" ), m_Country( "unknown" ), m_TheThingAmount( 0 ), m_TheThing( "" ), m_TheThingType( 0 ), m_Count( 0 ), m_Silence( false ), m_HasLeft( false ),
     m_AFKMarked( false ), m_SafeDrop( false ), m_FeedLevel( 0 ), m_VKTimes( 0 ), m_HighPingTimes( 0 ), m_AnnounceTime( GetTime( ) ), m_Level( 0 ), m_LevelName( "unknown" ), m_StartVoted( false ), m_GlobalChatMuted( false ), m_InsultM( "" ), m_DownloadTicks( 0 ), m_Checked( 0 ), m_VotedForInterruption( false ),
-    m_VotedMode( 0 ), m_NoLag( false ), m_ActionCounter( 0 ), m_FirstPartOfMinute( 0 ), m_SecondPartOfMinute( 0 ), m_ThirdPartOfMinute( 0 ), m_FourthPartOfMinute( 0 ), m_FifthPartOfMinute( 0 ), m_SixthPartOfMinute( 0 ), m_AFKWarnings( 0 ), m_LastAfkWarn( 0 ), m_EXP( 0 ), m_ID( 0 ), m_VotedForBalance(false), m_Reputation( 0.00 ), m_PlayerLanguage( "en" ), m_LeaverLevel( 0 )
+    m_VotedMode( 0 ), m_NoLag( false ), m_ActionCounter( 0 ), m_FirstPartOfMinute( 0 ), m_SecondPartOfMinute( 0 ), m_ThirdPartOfMinute( 0 ), m_FourthPartOfMinute( 0 ), m_FifthPartOfMinute( 0 ), m_SixthPartOfMinute( 0 ), m_AFKWarnings( 0 ), m_LastAfkWarn( 0 ), m_EXP( 0 ), m_ID( 0 ), m_VotedForBalance(false), m_Reputation( 0.00 ), m_PlayerLanguage( "en" ), m_PenalityLevel( 0 ),
+	m_RequestedSwap(false), m_SwapTarget(255), m_LastAttackCommandToFountain(GetTime()), m_FFLevel(0), m_Cookies( 0 ), m_DenyLimit( m_Game->m_GHost->m_DenyLimit ), m_SwapLimit( m_Game->m_GHost->m_SwapLimit )
 {
     // todotodo: properly copy queued packets to the new player, this just discards them
     // this isn't a big problem because official Warcraft III clients don't send any packets after the join request until they receive a response
@@ -629,7 +630,7 @@ void CGamePlayer :: ProcessPackets( )
                                 }
                                 if( m_Count == 3 )
                                 {
-                                    m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Spam", m_Game->m_GHost->m_SpamBanTime, "" ) ) );
+				    m_Game->BanPlayerByPenality( m_Name, GetExternalIPString( ), m_Game->m_GHost->m_BotManagerName, m_PenalityLevel, "Spam" );
                                     SetMuted( true );
                                     m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "spamming" ) );
 
@@ -679,7 +680,7 @@ void CGamePlayer :: ProcessPackets( )
 
                                     if( RecentCount == 4 )
                                     {
-                                        m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Flame/Insult", m_Game->m_GHost->m_FirstFlameBanTime, "" ) ) );
+					m_Game->BanPlayerByPenality( m_Name, GetExternalIPString( ), m_Game->m_GHost->m_BotManagerName, m_PenalityLevel, "Flame/Insult" );
                                         SetMuted( true );
                                         m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
 
@@ -687,8 +688,8 @@ void CGamePlayer :: ProcessPackets( )
                                     if( RecentCount == 5 )
                                     {
                                         //some people simple dont understand the ban policy.
-                                        m_Game->m_PairedBanAdds.push_back( PairedBanAdd( string(), m_Game->m_GHost->m_DB->ThreadedBanAdd( m_JoinedRealm, m_Name, GetExternalIPString( ), m_Game->m_GameName, m_Game->m_GHost->m_BotManagerName, "Flame/Insult", m_Game->m_GHost->m_SecondFlameBanTime, "" ) ) );
-                                        SetMuted( true );
+                                        m_Game->BanPlayerByPenality( m_Name, GetExternalIPString( ), m_Game->m_GHost->m_BotManagerName, m_PenalityLevel, "Flame/Insult" );
+					SetMuted( true );
                                         m_Game->SendAllChat( "["+m_Game->m_GHost->m_BotManagerName+"] " + m_Game->m_GHost->m_Language->UserWasMutedForReason( m_Name, "flaming" ) );
 
                                     }

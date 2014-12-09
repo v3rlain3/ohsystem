@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -486,7 +485,7 @@ string CLanguage :: HasPlayedGamesWithThisBot( string user, string score, string
     UTIL_Replace( Out, "$GAMES$", games );
     UTIL_Replace( Out, "$WINPERC$", winperc );
     UTIL_Replace( Out, "$STREAK$", streak );
-    if( month == "0" && year == "0")
+    if( month == "unknown" && year == "0")
         UTIL_Replace( Out, "$TIME$", "overall");
     else
         UTIL_Replace( Out, "$TIME$", month+", "+year);
@@ -497,7 +496,7 @@ string CLanguage :: HasntPlayedGamesWithThisBot( string user, string month, stri
 {
     string Out = m_CFG->GetString( "lang_0062", "lang_0062" );
     UTIL_Replace( Out, "$USER$", user );
-    if( month == "0" && year == "0")
+    if( month == "unknown" && year == "0")
         UTIL_Replace( Out, "$TIME$", "overall");
     else
         UTIL_Replace( Out, "$TIME$", month+", "+year);
@@ -636,7 +635,7 @@ string CLanguage :: HasPlayedAliasGamesWithThisBot2( string user, string totalga
     UTIL_Replace( Out, "$AVGNEUTRALKILLS$", avgneutralkills );
     UTIL_Replace( Out, "$AVGTOWERKILLS$", avgtowerkills );
     UTIL_Replace( Out, "$AVGRAXKILLS$", avgraxkills );
-    if( month == "0" && year == "0")
+    if( month == "unknown" && year == "0")
         UTIL_Replace( Out, "$TIME$", "overall");
     else
         UTIL_Replace( Out, "$TIME$", month+", "+year);
@@ -648,7 +647,7 @@ string CLanguage :: HasntPlayedAliasGamesWithThisBot( string user, string month,
     string Out = m_CFG->GetString( "lang_0075", "lang_0075" );
     UTIL_Replace( Out, "$GAMEALIAS$", gamealias );
     UTIL_Replace( Out, "$USER$", user );
-    if( month == "0" && year == "0")
+    if( month == "unknown" && year == "0")
         UTIL_Replace( Out, "$TIME$", "overall");
     else
         UTIL_Replace( Out, "$TIME$", month+", "+year);
@@ -2375,7 +2374,7 @@ string CLanguage :: DidNotFoundAlias( string alias )
 
 string CLanguage :: UsingDefaultAlias( string alias )
 {
-    string Out = m_CFG->GetString( "oh_109", "oh_109" );
+    string Out = m_CFG->GetString( "oh_110", "oh_110" );
     UTIL_Replace( Out, "$ALIAS$", alias);
     return Out;
 }
@@ -2505,9 +2504,10 @@ string CLanguage :: ObserverTriesToDraw( )
     return Out;
 }
 
-string CLanguage :: RemainFFTime( string remain )
+string CLanguage :: RemainFFTime( string minff, string remain )
 {
     string Out = m_CFG->GetString( "oh_130", "oh_130" );
+    UTIL_Replace( Out, "$MINFF$", minff );
     UTIL_Replace( Out, "$REMAIN$", remain );
     return Out;
 }
@@ -2911,11 +2911,10 @@ string CLanguage :: DomainOnJoinNotify( )
     return Out;
 }
 
-string CLanguage :: WelcomeBackUser( string user, string ping )
+string CLanguage :: WelcomeBackUser( string user )
 {
     string Out = m_CFG->GetString( "oh_191", "oh_191" );
-    UTIL_Replace( Out, "$USER$", user);
-    UTIL_Replace( Out, "$PING$", ping);
+    UTIL_Replace( Out, "$USER$", user );
     return Out;
 }
 
@@ -3288,5 +3287,342 @@ string CLanguage :: FlameWarn2( )
 string CLanguage :: FlameWarn3( )
 {
     string Out = m_CFG->GetString( "oh_243", "oh_243" );
+    return Out;
+}
+
+string CLanguage :: RequestedSwapWithPlayer( string user )
+{
+    string Out = m_CFG->GetString( "oh_244", "oh_244" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+string CLanguage :: PlayerRequestedSwapWithYou( string user )
+{
+    string Out = m_CFG->GetString( "oh_245", "oh_245" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+string CLanguage :: PlayersSwapped( string user, string player )
+{
+    string Out = m_CFG->GetString( "oh_246", "oh_246" );
+    UTIL_Replace( Out, "$USER$", user );
+    UTIL_Replace( Out, "$PLAYER$", player);
+    return Out;
+}
+string CLanguage :: PlayerIsAlreadySwapping( string user )
+{
+    string Out = m_CFG->GetString( "oh_247", "oh_247" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+string CLanguage :: YouAlreadyRequestedASwap( )
+{
+    string Out = m_CFG->GetString( "oh_248", "oh_248" );
+    return Out;
+}
+string CLanguage :: ThePlayerAlreadyLeft( )
+{
+    string Out = m_CFG->GetString( "oh_249", "oh_249" );
+    return Out;
+}
+string CLanguage :: TryingToSwapAcceptWhenRequested( )
+{
+    string Out = m_CFG->GetString( "oh_250", "oh_250" );
+    return Out;
+}
+
+string CLanguage :: NoOneIsSwappingWithYou( )
+{
+    string Out = m_CFG->GetString( "oh_251", "oh_251" );
+    return Out;
+}
+
+string CLanguage :: AbortedTheSwap( )
+{
+    string Out = m_CFG->GetString( "oh_252", "oh_252" );
+    return Out;
+}
+
+string CLanguage :: UserAbortedSwapWithYou( string user )
+{
+    string Out = m_CFG->GetString( "oh_253", "oh_253" );
+    UTIL_Replace( Out, "$USER$", user );
+    return Out;
+}
+
+string CLanguage :: DisconnectedAt( )
+{
+    string Out = m_CFG->GetString( "oh_254", "oh_254" );
+    return Out;
+}
+
+string CLanguage :: LeftAt( )
+{
+    string Out = m_CFG->GetString( "oh_255", "oh_255" );
+    return Out;
+}
+
+string CLanguage :: SuccessfullyUsedCachedPass( )
+{
+    string Out = m_CFG->GetString( "oh_256", "oh_256" );
+    return Out;
+}
+
+string CLanguage :: UseDrawToDrawGame( )
+{
+    string Out = m_CFG->GetString( "oh_257", "oh_257" );
+    return Out;
+}
+
+string CLanguage :: Unknown( )
+{
+    string Out = m_CFG->GetString( "oh_258", "oh_258" );
+    return Out;
+}
+
+string CLanguage :: LevelWasChanged( string level, string user )
+{
+    string Out = m_CFG->GetString( "oh_259", "oh_259" );
+    UTIL_Replace( Out, "$USER$", user );
+    UTIL_Replace( Out, "$LEVEL$", level );
+    return Out;
+}
+
+string CLanguage :: CustomVoteKickReasons( )
+{
+    string Out = m_CFG->GetString( "oh_260", "oh_260" );
+    return Out;
+}
+
+string CLanguage :: YourUniqueId( string id)
+{
+    string Out = m_CFG->GetString( "oh_261", "oh_261" );
+    UTIL_Replace( Out, "$ID$", id );
+    return Out;
+}
+
+string CLanguage :: RuleTags( )
+{
+    string Out = m_CFG->GetString( "oh_262", "oh_262" );
+    return Out;
+}
+
+string CLanguage :: YourPingIsToday( )
+{
+    string Out = m_CFG->GetString( "oh_263", "oh_263" );
+    return Out;
+}
+
+string CLanguage :: PossibleModesToVote( )
+{
+    string Out = m_CFG->GetString( "oh_264", "oh_264" );
+    return Out;
+}
+
+string CLanguage :: VoteResult( )
+{
+    string Out = m_CFG->GetString( "oh_265", "oh_265" );
+    return Out;
+}
+
+string CLanguage :: BanReasonIs( )
+{
+    string Out = m_CFG->GetString( "oh_266", "oh_266" );
+    return Out;
+}
+
+string CLanguage :: UnableToJoin( )
+{
+    string Out = m_CFG->GetString( "oh_267", "oh_267" );
+    return Out;
+}
+
+string CLanguage :: YouAreBanned( )
+{
+    string Out = m_CFG->GetString( "oh_268", "oh_268" );
+    return Out;
+}
+
+string CLanguage :: BannedAt( uint32_t id, string name, string server )
+{
+    string Out = m_CFG->GetString( "oh_269", "oh_269" );
+    UTIL_Replace( Out, "$ID$", UTIL_ToString(id) );
+    UTIL_Replace( Out, "$NAME$", name );
+    UTIL_Replace( Out, "$SERVER$", server );
+    return Out;
+}
+string CLanguage :: BanDateAndRemain( string date, string remain )
+{
+    string Out = m_CFG->GetString( "oh_270", "oh_270" );
+    UTIL_Replace( Out, "$DATE$", date );
+    UTIL_Replace( Out, "$REMAIN$", remain );
+    return Out;
+}
+string CLanguage :: BanDateWithoutRemain( string date )
+{
+    string Out = m_CFG->GetString( "oh_271", "oh_271" );
+    UTIL_Replace( Out, "$DATE$", date );
+    return Out;
+}
+string CLanguage :: BanGameName( string game )
+{
+    string Out = m_CFG->GetString( "oh_272", "oh_272" );
+    UTIL_Replace( Out, "$GAMENAME$", game );
+    return Out;
+}
+string CLanguage :: BanReason( string reason )
+{
+    string Out = m_CFG->GetString( "oh_273", "oh_273" );
+    UTIL_Replace( Out, "$REASON$", reason );
+    return Out;
+}
+string CLanguage :: YouCanAlsoUseGproxy( )
+{
+    string Out = m_CFG->GetString( "oh_274", "oh_274" );
+    return Out;
+}
+string CLanguage :: JoinedInAGameWithAMinAmountOfGames( )
+{
+    string Out = m_CFG->GetString( "oh_275", "oh_275" );
+    return Out;
+}
+string CLanguage :: YouRequireAtLeastGames( string min )
+{
+    string Out = m_CFG->GetString( "oh_276", "oh_276" );
+        UTIL_Replace( Out, "$MIN$", min );
+    return Out;
+}
+string CLanguage :: JoinedInAGameWithAMinAmountOfScore( )
+{
+    string Out = m_CFG->GetString( "oh_277", "oh_277" );
+    return Out;
+}
+string CLanguage :: YouRequireToBeRegisteredOnStatsPage( )
+{
+    string Out = m_CFG->GetString( "oh_278", "oh_278" );
+    return Out;
+}
+string CLanguage :: YouRequireToBeSafelisted( )
+{
+    string Out = m_CFG->GetString( "oh_279", "oh_279" );
+    return Out;
+}
+string CLanguage :: GetMoreInformationOn( string site )
+{
+    string Out = m_CFG->GetString( "oh_280", "oh_280" );
+        UTIL_Replace( Out, "$SITE$", site );
+    return Out;
+}
+string CLanguage :: YouAreBannedFromLobby( )
+{
+    string Out = m_CFG->GetString( "oh_281", "oh_281" );
+    return Out;
+}
+string CLanguage :: YouJoinedFromProxy( )
+{
+    string Out = m_CFG->GetString( "oh_282", "oh_282" );
+    return Out;
+}
+string CLanguage :: YouJoinedFromABannedCountry( )
+{
+    string Out = m_CFG->GetString( "oh_283", "oh_283" );
+    return Out;
+}
+string CLanguage :: YouAreForcedToUseGproxy( )
+{
+    string Out = m_CFG->GetString( "oh_284", "oh_284" );
+    return Out;
+}
+string CLanguage :: YouWillBeKickedInAFewSeconds( )
+{
+    string Out = m_CFG->GetString( "oh_285", "oh_285" );
+    return Out;
+}
+string CLanguage :: ReplayPrefix()
+{
+    string Out = m_CFG->GetString( "oh_286", "oh_286" );
+    return Out;
+}
+string CLanguage :: YouHaveBeenDetectedAsFountainFarmer()
+{
+    string Out = m_CFG->GetString( "oh_287", "oh_287" );
+    return Out;
+}
+string CLanguage :: LostConnectionPleaseTryLater()
+{
+    string Out = m_CFG->GetString( "oh_288", "oh_288" );
+    return Out;
+}
+string CLanguage :: Month()
+{
+    string Out = m_CFG->GetString( "oh_289", "oh_289" );
+    return Out;
+}
+string CLanguage :: Day()
+{
+    string Out = m_CFG->GetString( "oh_290", "oh_290" );
+    return Out;
+}
+
+string CLanguage :: Hour()
+{
+    string Out = m_CFG->GetString( "oh_291", "oh_291" );
+    return Out;
+}
+
+string CLanguage :: Minute()
+{
+    string Out = m_CFG->GetString( "oh_292", "oh_292" );
+    return Out;
+}
+string CLanguage :: Announcement()
+{
+    string Out = m_CFG->GetString( "oh_293", "oh_293" );
+    return Out;
+}
+string CLanguage::ErrorModeWasAlreadyForced()
+{
+	string Out = m_CFG->GetString("oh_294", "oh_294");
+	return Out;
+}
+string CLanguage::ModeWasForcedTo(string mode)
+{
+	string Out = m_CFG->GetString("oh_295", "oh_295");
+	UTIL_Replace(Out, "$MODE$", mode);
+	return Out;
+}
+string CLanguage :: Ms()
+{
+       string Out = m_CFG->GetString( "oh_296", "oh_296" );
+       return Out;
+}
+string CLanguage :: Country()
+{
+    string Out = m_CFG->GetString( "oh_297", "oh_297" );
+    return Out;
+}
+string CLanguage :: Status()
+{
+    string Out = m_CFG->GetString( "oh_298", "oh_298" );
+    return Out;
+}
+string CLanguage :: SpoofChecked()
+{
+    string Out = m_CFG->GetString( "oh_299", "oh_299" );
+    return Out;
+}
+string CLanguage :: Yes()
+{
+    string Out = m_CFG->GetString( "oh_300", "oh_300" );
+    return Out;
+}
+string CLanguage :: No()
+{
+    string Out = m_CFG->GetString( "oh_301", "oh_301" );
+    return Out;
+}
+string CLanguage :: Realm()
+{
+    string Out = m_CFG->GetString( "oh_302", "oh_302" );
     return Out;
 }

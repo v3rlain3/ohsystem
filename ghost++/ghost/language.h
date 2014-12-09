@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #ifndef LANGUAGE_H
@@ -393,7 +392,7 @@ public:
     string UndrawNotify( );
     string UserRecalledDrawVote( string user );
     string ObserverTriesToDraw( );
-    string RemainFFTime( string remain );
+    string RemainFFTime( string minff, string remain );
     string TeamForfeited( string team );
     string StayToSafeStats( );
     string UserForfeitedGame( string user );
@@ -454,7 +453,7 @@ public:
     string UsersOwnReputation( string reputation );
     string WelcomeUserCreateUniqueId( string user );
     string DomainOnJoinNotify( );
-    string WelcomeBackUser( string user, string ping );
+    string WelcomeBackUser( string user );
     string CreatedUniqueIdForNewUser( string id );
     string PotentialBanAvoider( string user, string count );
     string KickedUserForBeingAFK( string user );
@@ -507,6 +506,65 @@ public:
     string FlameWarn( );
     string FlameWarn2( );
     string FlameWarn3( );
+    string RequestedSwapWithPlayer( string user );
+    string PlayerRequestedSwapWithYou( string user );
+    string PlayersSwapped( string user, string player );
+    string PlayerIsAlreadySwapping( string user );
+    string YouAlreadyRequestedASwap( );
+    string ThePlayerAlreadyLeft( );
+    string TryingToSwapAcceptWhenRequested( );
+    string NoOneIsSwappingWithYou( );
+    string AbortedTheSwap( );
+    string UserAbortedSwapWithYou( string user );
+    string DisconnectedAt( );
+    string LeftAt( );
+    string SuccessfullyUsedCachedPass( );
+    string UseDrawToDrawGame( );
+    string Unknown( );
+    string LevelWasChanged( string level, string user );
+    string CustomVoteKickReasons( );
+    string YourUniqueId( string id);
+    string RuleTags();
+    string YourPingIsToday( );
+    string PossibleModesToVote( );
+    string VoteResult( );
+    string BanReasonIs( );
+    string UnableToJoin( );
+    string YouAreBanned( );
+    string BannedAt(uint32_t id, string name, string server );
+    string BanDateAndRemain( string date, string remain );
+    string BanDateWithoutRemain( string date );
+    string BanGameName( string game );
+    string BanReason( string reason );
+    string YouCanAlsoUseGproxy( );
+    string JoinedInAGameWithAMinAmountOfGames( );
+    string YouRequireAtLeastGames( string min );
+    string JoinedInAGameWithAMinAmountOfScore( );
+    string YouRequireToBeRegisteredOnStatsPage( );
+    string YouRequireToBeSafelisted( );
+    string GetMoreInformationOn( string site );
+    string YouAreBannedFromLobby( );
+    string YouJoinedFromProxy( );
+    string YouJoinedFromABannedCountry( );
+    string YouAreForcedToUseGproxy( );
+    string YouWillBeKickedInAFewSeconds( );
+    string ReplayPrefix( );
+    string YouHaveBeenDetectedAsFountainFarmer( );
+    string LostConnectionPleaseTryLater();
+    string Month();
+    string Day();
+    string Hour();
+    string Minute();
+    string Announcement();
+	string ErrorModeWasAlreadyForced();
+	string ModeWasForcedTo(string mode);
+	string Ms();
+	string Country();
+        string Status();
+        string SpoofChecked();
+        string Yes();
+        string No();
+        string Realm();
 };
 
 #endif

@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 #ifndef STATSDOTA_H
 #define STATSDOTA_H
@@ -64,6 +63,7 @@ private:
     string m_BufferedItemFive[12];
     string m_BufferedItemSix[12];
     uint32_t m_BufferedItemCount[12];
+    uint32_t m_FFKills[12];
 
 public:
     CStatsDOTA( CBaseGame *nGame );
@@ -72,8 +72,9 @@ public:
     virtual bool ProcessAction( CIncomingAction *Action );
     virtual void Save( CGHost *GHost, CGHostDB *DB, uint32_t GameID );
     virtual void SetWinner( uint32_t nWinner ) {
-        m_Winner = nWinner + 1;
+        m_Winner = nWinner;
     }
+    virtual uint32_t GetWinner( ) { return m_Winner; }
 };
 
 #endif

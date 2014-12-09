@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 
 #include "ghost.h"
@@ -29,6 +28,7 @@
 #include "game_base.h"
 #include "stats.h"
 #include "statsdota.h"
+#include"language.h"
 
 //
 // CStatsDOTA
@@ -49,6 +49,7 @@ CStatsDOTA :: CStatsDOTA( CBaseGame *nGame ) : CStats( nGame ), m_Winner( 0 ), m
         m_DeathsByLeaver[i] = 0;
         m_LatestKill[i] = 0;
         m_KillCounter[i] = 0;   //The killcounter for checking as double kill etc (not the general kills of a player.)
+        m_FFKills[i] = 0;
         m_KillStreakCounter[i] = 0;
         m_BufferedItemOne[i] = "";
         m_BufferedItemTwo[i] = "";
@@ -124,7 +125,6 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                         string KeyString = string( Key.begin( ), Key.end( ) );
                         uint32_t ValueInt = UTIL_ByteArrayToUInt32( Value, false );
 
-                        //CONSOLE_Print( "[STATS] " + DataString + ", " + KeyString + ", " + UTIL_ToString( ValueInt ) );
                         //m_Game->SendAllChat( "[STATS] " + DataString + ", " + KeyString + ", " + UTIL_ToString( ValueInt ) );
                         if( DataString == "Data" )
                         {
@@ -254,6 +254,16 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                         CONSOLE_Print( "[STATS"+TypePrefix+": " + m_Game->GetGameName( ) + "] player [" + Killer->GetName( ) + "] killed player [" + Victim->GetName( ) + "]" );
                                         m_Game->m_LogData = m_Game->m_LogData + "4" + "\t" + "k" + "\t" + Killer->GetName( ) + "\t" + Victim->GetName( ) + "\t" + m_Players[ValueInt]->GetHero( ) + "\t" + m_Players[VictimColour]->GetHero( ) + "\t" + MinString + ":" + SecString + "\t" + "-" + "\n";
                                     }
+
+                                    if( GetTime() - Killer->GetLastAttackTimeToFountain() <=5 && m_Game->m_GHost->m_FountainFarmDetection) {
+                                        m_Game->SendChat(Killer->GetPID(), m_Game->m_GHost->m_Language->YouHaveBeenDetectedAsFountainFarmer());
+                                        m_FFKills[ValueInt]++;
+                                        Killer->SetFFLevel();
+
+                                        if(Killer->GetFFLevel() == 3 ) {
+					    m_Game->BanPlayerByPenality( Killer->GetName(), Killer->GetExternalIPString(), m_Game->m_GHost->m_BotManagerName, Killer->GetPenalityLevel(), "FountainFarm" );
+                                        }
+                                    }
                                 }
                                 else if( Victim )
                                 {
@@ -305,6 +315,16 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                     m_LeaverDeaths[VictimColour]++;
                                     if( m_LeaverDeaths[ValueInt] >= m_Game->m_GHost->m_MinimumLeaverDeaths )
                                         m_Game->SendAllChat( "[ANTIFARM] A leaver ["+UTIL_ToString(VictimColour)+"] was already ["+UTIL_ToString(m_LeaverDeaths[ValueInt])+"] times killed while he left. All remaining deaths wont be recorded." );
+
+                                    if( GetTime() - Killer->GetLastAttackTimeToFountain() <=5 && m_Game->m_GHost->m_FountainFarmDetection) {
+                                        m_Game->SendChat(Killer->GetPID(), m_Game->m_GHost->m_Language->YouHaveBeenDetectedAsFountainFarmer() );
+                                        m_FFKills[ValueInt]++;
+                                        Killer->SetFFLevel();
+
+                                        if(Killer->GetFFLevel() == 3 ) {
+					    m_Game->BanPlayerByPenality( Killer->GetName(), Killer->GetExternalIPString(), m_Game->m_GHost->m_BotManagerName, Killer->GetPenalityLevel(), "FountainFarm" );
+                                        }
+                                    }
                                 }
 
                                 if( Victim != NULL )
@@ -326,7 +346,6 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                         Victim->SetFeedLevel( 1 );
                                     }
                                 }
-
                             }
                             else if( KeyString.size( ) >= 4 && KeyString.substr( 0, 6 ) == "Assist" )
                             {
@@ -774,6 +793,21 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                 m_Game->GAME_Print( 1, MinString, SecString, "System", "", ModeString );
                                 m_Game->m_LogData = m_Game->m_LogData + "4" + "\t" + "mode" + "\t" + "-" + "\t" + "-" + "\t" + "-" + "\t" + "-" + "\t" + MinString + ":" + SecString + "\t" + ModeString + "\n";
                             }
+			    else if( KeyString.size( ) >= 2 && KeyString.substr( 0, 2 ) == "SP" )
+			    {
+				string Spell = string( Value.rbegin( ), Value.rend( ) );
+				string PlayerID = KeyString.substr( 4 );
+				string SpellID = KeyString.substr( 2, 1 );
+				uint32_t ID = UTIL_ToUInt32( PlayerID );
+				CGamePlayer *Player = m_Game->GetPlayerFromColour( ID );
+				CONSOLE_Print( "[DEBUG:  Found Spell: "+Spell+ " | PlayerID: "+PlayerID+" | SpellID: "+SpellID  );
+                                if( ( ID >= 1 && ID <= 5 ) || ( ID >= 7 && ID <= 11 ) ) {
+                                	if( !m_Players[ID] )
+        	                        	m_Players[ID] = new CDBDotAPlayer( );
+
+                                        m_Players[ID]->SetSpell( UTIL_ToUInt32( SpellID ) - 1, Spell );
+				}
+			   }
                         }
                         else if( DataString == "Global" )
                         {
@@ -792,7 +826,7 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                     CONSOLE_Print( "[STATS"+TypePrefix+": " + m_Game->GetGameName( ) + "] detected winner: Scourge" );
                                 else
                                     CONSOLE_Print( "[STATS"+TypePrefix+": " + m_Game->GetGameName( ) + "] detected winner: " + UTIL_ToString( ValueInt ) );
-
+				m_Game->m_GHost->CallGameEnd( m_Game->m_GameName, m_Game->m_CreationTime, m_Winner );
                             }
                             else if( KeyString == "m" )
                                 m_Min = ValueInt;
@@ -845,7 +879,7 @@ bool CStatsDOTA :: ProcessAction( CIncomingAction *Action )
                                         m_Players[ID]->SetKills( ValueInt - m_LeaverKills[ID] );
                                     }
                                     else
-                                        m_Players[ID]->SetKills( ValueInt );
+                                        m_Players[ID]->SetKills( ValueInt - m_FFKills[ID] );
                                     if( ValueInt > 500 )
                                     {
                                         m_Players[ID]->SetKills( 0 );
@@ -1122,9 +1156,9 @@ void CStatsDOTA :: Save( CGHost *GHost, CGHostDB *DB, uint32_t GameID )
             if( m_Players[i] )
             {
                 if(m_Players[i]->GetItem( 0 ) != "" || m_Players[i]->GetItem( 1 ) != "" || m_Players[i]->GetItem( 2 ) != "" || m_Players[i]->GetItem( 3 ) != "" || m_Players[i]->GetItem( 4 ) != "" || m_Players[i]->GetItem( 5 ) != "" || m_Players[i]->GetGold () < 50 )
-                    GHost->m_Callables.push_back( DB->ThreadedDotAPlayerAdd( GameID, m_Players[i]->GetColour( ), m_Players[i]->GetKills( ), m_Players[i]->GetDeaths( ), m_Players[i]->GetCreepKills( ), m_Players[i]->GetCreepDenies( ), m_Players[i]->GetAssists( ), m_Players[i]->GetGold( ), m_Players[i]->GetNeutralKills( ), m_Players[i]->GetItem( 0 ), m_Players[i]->GetItem( 1 ), m_Players[i]->GetItem( 2 ), m_Players[i]->GetItem( 3 ), m_Players[i]->GetItem( 4 ), m_Players[i]->GetItem( 5 ), m_Players[i]->GetHero( ), m_Players[i]->GetNewColour( ), m_Players[i]->GetTowerKills( ), m_Players[i]->GetRaxKills( ), m_Players[i]->GetCourierKills( ), m_Players[i]->GetLevel( ) ) );
+                    GHost->m_Callables.push_back( DB->ThreadedDotAPlayerAdd( GameID, m_Players[i]->GetColour( ), m_Players[i]->GetKills( ), m_Players[i]->GetDeaths( ), m_Players[i]->GetCreepKills( ), m_Players[i]->GetCreepDenies( ), m_Players[i]->GetAssists( ), m_Players[i]->GetGold( ), m_Players[i]->GetNeutralKills( ), m_Players[i]->GetItem( 0 ), m_Players[i]->GetItem( 1 ), m_Players[i]->GetItem( 2 ), m_Players[i]->GetItem( 3 ), m_Players[i]->GetItem( 4 ), m_Players[i]->GetItem( 5 ), m_Players[i]->GetSpell( 0 ), m_Players[i]->GetSpell( 1 ), m_Players[i]->GetSpell( 2 ), m_Players[i]->GetSpell( 3 ), m_Players[i]->GetSpell( 4 ), m_Players[i]->GetSpell( 5 ), m_Players[i]->GetHero( ), m_Players[i]->GetNewColour( ), m_Players[i]->GetTowerKills( ), m_Players[i]->GetRaxKills( ), m_Players[i]->GetCourierKills( ), m_Players[i]->GetLevel( ) ) );
                 else
-                    GHost->m_Callables.push_back( DB->ThreadedDotAPlayerAdd( GameID, m_Players[i]->GetColour( ), m_Players[i]->GetKills( ), m_Players[i]->GetDeaths( ), m_Players[i]->GetCreepKills( ), m_Players[i]->GetCreepDenies( ), m_Players[i]->GetAssists( ), m_Players[i]->GetGold( ), m_Players[i]->GetNeutralKills( ), m_BufferedItemOne[i], m_BufferedItemTwo[i], m_BufferedItemThree[i], m_BufferedItemFour[i], m_BufferedItemFive[i], m_BufferedItemSix[i], m_Players[i]->GetHero( ), m_Players[i]->GetNewColour( ), m_Players[i]->GetTowerKills( ), m_Players[i]->GetRaxKills( ), m_Players[i]->GetCourierKills( ), m_Players[i]->GetLevel( ) ) );
+                    GHost->m_Callables.push_back( DB->ThreadedDotAPlayerAdd( GameID, m_Players[i]->GetColour( ), m_Players[i]->GetKills( ), m_Players[i]->GetDeaths( ), m_Players[i]->GetCreepKills( ), m_Players[i]->GetCreepDenies( ), m_Players[i]->GetAssists( ), m_Players[i]->GetGold( ), m_Players[i]->GetNeutralKills( ), m_BufferedItemOne[i], m_BufferedItemTwo[i], m_BufferedItemThree[i], m_BufferedItemFour[i], m_BufferedItemFive[i], m_BufferedItemSix[i], m_Players[i]->GetSpell( 0 ), m_Players[i]->GetSpell( 1 ), m_Players[i]->GetSpell( 2 ), m_Players[i]->GetSpell( 3 ), m_Players[i]->GetSpell( 4 ), m_Players[i]->GetSpell( 5 ), m_Players[i]->GetHero( ), m_Players[i]->GetNewColour( ), m_Players[i]->GetTowerKills( ), m_Players[i]->GetRaxKills( ), m_Players[i]->GetCourierKills( ), m_Players[i]->GetLevel( ) ) );
                 ++Players;
             }
         }

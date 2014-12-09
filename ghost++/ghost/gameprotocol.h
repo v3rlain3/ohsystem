@@ -11,14 +11,13 @@
 * (at your option) any later version.
 *
 * You can contact the developers on: admin@ohsystem.net
-* or join us directly here: http://ohsystem.net/forum/
+* or join us directly here: http://forum.ohsystem.net/
 *
 * Visit us also on http://ohsystem.net/ and keep track always of the latest
 * features and changes.
 *
 *
 * This is modified from GHOST++: http://ghostplusplus.googlecode.com/
-* Official GhostPP-Forum: http://ghostpp.com/
 */
 #ifndef GAMEPROTOCOL_H
 #define GAMEPROTOCOL_H
@@ -184,7 +183,7 @@ public:
     BYTEARRAY GetInternalIP( )	{
         return m_InternalIP;
     }
-    bool GetGames( )            {
+    uint32_t GetGames( )            {
         return m_Games;
     }
     bool GetRegistered( )       {

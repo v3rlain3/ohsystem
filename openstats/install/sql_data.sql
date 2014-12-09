@@ -86,6 +86,26 @@ CREATE TABLE IF NOT EXISTS `oh_ban_reports` (
   KEY `user_id` (`user_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `oh_bot_status` (
+  `botid` tinyint(4) NOT NULL,
+  `name` varchar(15) NOT NULL,
+  `gamename` varchar(31) NOT NULL,
+  `ip` varchar(21) NOT NULL,
+  `hostport` smallint(6) unsigned NOT NULL,
+  `roc` varchar(50) NOT NULL,
+  `tft` varchar(50) NOT NULL,
+  `last_update` datetime NOT NULL,
+  `Europe` tinyint(1) unsigned NOT NULL,
+  `USEast` tinyint(1) unsigned NOT NULL,
+  `USWest` tinyint(1) unsigned NOT NULL,
+  `Asia` tinyint(1) unsigned NOT NULL,
+  `XAMP` tinyint(1) unsigned NOT NULL,
+  `Garena` tinyint(4) NOT NULL,
+  `WC3Connect` tinyint(4) NOT NULL,
+  PRIMARY KEY (`botid`),
+  KEY `hostport` (`hostport`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 DROP TABLE IF EXISTS `oh_bot_configuration`;
 CREATE TABLE IF NOT EXISTS `oh_bot_configuration` (
   `cfg_botid` tinyint(4) NOT NULL,
@@ -157,6 +177,12 @@ CREATE TABLE IF NOT EXISTS `oh_dotaplayers` (
   `item4` char(4) NOT NULL,
   `item5` char(4) NOT NULL,
   `item6` char(4) NOT NULL,
+  `spell1` char(4) NOT NULL,
+  `spell2` char(4) NOT NULL,
+  `spell3` char(4) NOT NULL,
+  `spell4` char(4) NOT NULL,
+  `spell5` char(4) NOT NULL,
+  `spell6` char(4) NOT NULL,
   `hero` char(4) NOT NULL,
   `newcolour` tinyint(1) unsigned NOT NULL,
   `towerkills` tinyint(2) unsigned NOT NULL,
@@ -205,23 +231,24 @@ CREATE TABLE IF NOT EXISTS `oh_goals` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `oh_gamelist`;
+
 CREATE TABLE IF NOT EXISTS `oh_gamelist` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `botid` smallint(4) unsigned DEFAULT NULL,
-  `alias_id` tinyint(4) unsigned NOT NULL,
+  `botid` smallint(4) unsigned NOT NULL,
   `gameid` int(11) unsigned NOT NULL,
-  `last_update` datetime NOT NULL,
-  `gamename` varchar(128) DEFAULT NULL,
-  `ownername` varchar(32) DEFAULT NULL,
-  `creatorname` varchar(32) DEFAULT NULL,
-  `map` varchar(100) DEFAULT NULL,
-  `slotstaken` tinyint(1) unsigned DEFAULT NULL,
-  `slotstotal` tinyint(1) unsigned DEFAULT NULL,
-  `usernames` varchar(512) DEFAULT NULL,
-  `totalgames` tinyint(1) DEFAULT NULL,
-  `totalplayers` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MEMORY  DEFAULT CHARSET=utf8;
+  `lobby` tinyint(1) NOT NULL,
+  `duration` int(11) NOT NULL,
+  `map_type` varchar(50) NOT NULL,
+  `gamename` varchar(30) NOT NULL,
+  `ownername` varchar(15) NOT NULL,
+  `creatorname` varchar(15) NOT NULL,
+  `map` varchar(100) NOT NULL,
+  `users` varchar(1000) NOT NULL,
+  `players` smallint(6) NOT NULL,
+  `total` smallint(6) NOT NULL,
+  PRIMARY KEY (`botid`),
+  KEY `gameid` (`gameid`),
+  KEY `lobby` (`lobby`)
+) ENGINE=MEMORY DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 DROP TABLE IF EXISTS `oh_gameplayers`;
 CREATE TABLE IF NOT EXISTS `oh_gameplayers` (
@@ -300,6 +327,7 @@ CREATE TABLE IF NOT EXISTS `oh_game_info` (
   `gamename` varchar(31) NOT NULL,
   `ownername` varchar(30) NOT NULL,
   `duration` int(11) unsigned NOT NULL,
+  `lobbytime` int(11) unsigned NOT NULL,
   `gamestate` int(11) unsigned NOT NULL,
   `creatorname` varchar(30) NOT NULL,
   `creatorserver` varchar(100) NOT NULL,
@@ -536,6 +564,8 @@ CREATE TABLE IF NOT EXISTS `oh_stats_players` (
   `hide` tinyint(1) unsigned NOT NULL,
   `realm` varchar(20) NOT NULL,
   `ip` varchar(15) NOT NULL,
+  `leaver_level` tinyint(4) NOT NULL DEFAULT '0',
+  `last_leaver_time` datetime NOT NULL,
   `country` varchar(50) NOT NULL,
   `country_code` varchar(2) NOT NULL,
   `points` int(11) unsigned NOT NULL,
@@ -562,6 +592,7 @@ CREATE TABLE IF NOT EXISTS `oh_users` (
   `user_email` varchar(60) NOT NULL,
   `user_joined` int(11) unsigned NOT NULL DEFAULT '0',
   `user_level` tinyint(1) unsigned NOT NULL,
+  `user_custom_permission` varchar(10) NOT NULL DEFAULT '0000000000',
   `user_level_expire` datetime NOT NULL,
   `admin_realm` varchar(64) NOT NULL,
   `expire_date` datetime NOT NULL,
